@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL for storing results
   postgres:
@@ -10,12 +8,12 @@ services:
       POSTGRES_PASSWORD: cpp_interview_pass
       POSTGRES_DB: cpp_interview_db
     ports:
-      - "5432:5432"
+      - "5433:5432"  # External 5433 to avoid conflict with local PostgreSQL
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cpp_interview"]
+      test: ["CMD-SHELL", "pg_isready -U cpp_interview -d cpp_interview_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,6 +42,9 @@ services:
     tty: true
     networks:
       - cpp_interview_network
+    # Graceful shutdown settings
+    stop_signal: SIGTERM
+    stop_grace_period: 5s
     # Default - interactive console
     command: python3 python/run.py
 

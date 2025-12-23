@@ -4,9 +4,45 @@ Interactive console for running tasks and benchmarks
 """
 import sys
 import os
-import subprocess
 import time
+import signal
+import select
 from typing import Optional
+
+# Global flag for graceful shutdown
+_shutdown_requested = False
+
+
+def signal_handler(signum, frame):
+    """Handle shutdown signals"""
+    global _shutdown_requested
+    _shutdown_requested = True
+    print("\n\nShutdown signal received. Exiting...")
+    sys.exit(0)
+
+
+# Register signal handlers for graceful shutdown
+signal.signal(signal.SIGTERM, signal_handler)
+signal.signal(signal.SIGINT, signal_handler)
+
+
+def interruptible_input(prompt: str) -> str:
+    """Read input with ability to be interrupted by signals"""
+    global _shutdown_requested
+    sys.stdout.write(prompt)
+    sys.stdout.flush()
+
+    while not _shutdown_requested:
+        # Check if stdin has data (timeout 0.5 sec)
+        ready, _, _ = select.select([sys.stdin], [], [], 0.5)
+        if ready:
+            line = sys.stdin.readline()
+            if not line:  # EOF
+                raise KeyboardInterrupt()
+            return line.rstrip("\n")
+
+    raise KeyboardInterrupt()
+
 
 # Add path to modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -40,10 +76,17 @@ class InterviewDemoConsole:
 
     def get_user_input(self, prompt: str, default: Optional[str] = None) -> str:
         """Get input from user"""
-        if default:
-            user_input = input(f"{prompt} [{default}]: ").strip()
-            return user_input if user_input else default
-        return input(f"{prompt}: ").strip()
+        global _shutdown_requested
+        if _shutdown_requested:
+            raise KeyboardInterrupt()
+        try:
+            if default:
+                user_input = interruptible_input(f"{prompt} [{default}]: ").strip()
+                return user_input if user_input else default
+            return interruptible_input(f"{prompt}: ").strip()
+        except EOFError:
+            # Handle EOF (e.g., when stdin is closed)
+            raise KeyboardInterrupt()
 
     def get_int_input(self, prompt: str, default: int) -> int:
         """Get integer input from user"""
@@ -323,7 +366,8 @@ class InterviewDemoConsole:
 
     def run(self):
         """Main loop"""
-        while self.running:
+        global _shutdown_requested
+        while self.running and not _shutdown_requested:
             self.print_menu()
             choice = self.get_user_input("Select option", "0")
             

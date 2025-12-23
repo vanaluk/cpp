@@ -31,7 +31,7 @@ public:
 
 private:
 	void start_accept() {
-		auto new_session= std::make_shared<Session>(acceptor_.get_executor().context());
+		auto new_session= std::make_shared<Session>(acceptor_.get_executor());
 		acceptor_.async_accept(new_session->socket(),
 			[this, new_session](boost::system::error_code ec) {
 				if(!ec) {
@@ -43,8 +43,8 @@ private:
 
 	class Session : public std::enable_shared_from_this<Session> {
 	public:
-		Session(boost::asio::io_context& io_context) :
-			socket_(io_context) {}
+		explicit Session(boost::asio::any_io_executor executor) :
+			socket_(executor) {}
 
 		tcp::socket& socket() {
 			return socket_;
