@@ -42,6 +42,12 @@ cpp/
 
 ---
 
+## 🚀 Quick Start
+
+See [QUICKSTART.md](QUICKSTART.md) for detailed installation and running instructions.
+
+---
+
 ## 🐳 Using Docker
 
 ### Mode 1: Interactive Console
@@ -75,7 +81,7 @@ Server will be available at `http://localhost:8080`:
 docker-compose --profile viewer run --rm results_viewer
 ```
 
-### Mode 4: Run Tests Inside Docker
+### Mode 4: Run Tests Inside Docker (not implemented)
 
 ```bash
 # Run tests
@@ -147,13 +153,7 @@ Total records: 3
 
 ---
 
-## 🚀 Quick Start
-
-See [QUICKSTART.md](QUICKSTART.md) for detailed installation and running instructions.
-
----
-
-## 📝 Test Tasks
+## 📝 Tasks
 
 ### Task 1: weak_ptr::lock()
 

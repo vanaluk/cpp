@@ -67,12 +67,6 @@ sudo apt-get install -y \
     python3 python3-pip python3-dev \
     libboost-all-dev libpq-dev \
     postgresql postgresql-client
-
-# Fedora/RHEL
-sudo dnf install -y \
-    gcc-c++ cmake \
-    python3 python3-pip python3-devel \
-    boost-devel libpq-devel postgresql
 ```
 
 ### 2.2 Build Project
@@ -80,8 +74,8 @@ sudo dnf install -y \
 ```bash
 cd cpp
 
-# Option 1: Via script
-./install.sh
+# Option 1: Via script (force local build, no Docker)
+./install.sh --local
 
 # Option 2: Manually
 mkdir -p build && cd build
@@ -89,6 +83,9 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build . -j$(nproc)
 cd ..
 ```
+
+> **Note:** Use `--local` flag to guarantee local build even if Docker is installed.
+> Use `./install.sh --help` to see all available options.
 
 ### 2.3 Configure PostgreSQL
 

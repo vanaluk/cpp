@@ -2,14 +2,49 @@
 
 set -e
 
-echo "=== C++ Interview Demo Project - Installation ==="
-echo ""
-
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+
+# Parse arguments
+NO_DOCKER=false
+SHOW_HELP=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --local)
+            NO_DOCKER=true
+            shift
+            ;;
+        -h|--help)
+            SHOW_HELP=true
+            shift
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            SHOW_HELP=true
+            shift
+            ;;
+    esac
+done
+
+if [ "$SHOW_HELP" = true ]; then
+    echo "Usage: ./install.sh [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  --local      Force local build without Docker"
+    echo "  -h, --help   Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  ./install.sh          # Auto-detect Docker, use if available"
+    echo "  ./install.sh --local  # Force local build"
+    exit 0
+fi
+
+echo "=== C++ Interview Demo Project - Installation ==="
+echo ""
 
 # Function to check command
 check_command() {
@@ -55,8 +90,11 @@ install_dependencies_fedora() {
         perf
 }
 
-# Check Docker
-if check_command docker && check_command docker-compose; then
+# Check Docker (skip if --no-docker flag is set)
+if [ "$NO_DOCKER" = true ]; then
+    echo -e "${YELLOW}Docker disabled by --no-docker flag. Using local build.${NC}"
+    echo ""
+elif check_command docker && check_command docker-compose; then
     echo ""
     echo -e "${GREEN}Docker detected! Using Docker for build.${NC}"
     echo ""
@@ -78,7 +116,11 @@ fi
 
 # Local installation
 echo ""
-echo -e "${YELLOW}Docker not detected. Checking local dependencies...${NC}"
+if [ "$NO_DOCKER" = true ]; then
+    echo -e "${YELLOW}Local build mode. Checking dependencies...${NC}"
+else
+    echo -e "${YELLOW}Docker not detected. Checking local dependencies...${NC}"
+fi
 echo ""
 
 # Check required commands
