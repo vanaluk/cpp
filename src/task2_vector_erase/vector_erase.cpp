@@ -29,7 +29,7 @@ void demonstrate_vector_erase() {
 // Benchmark function
 long long benchmark_vector_erase(
 	void (*method)(std::vector<int>&),
-	const std::string& method_name,
+	[[maybe_unused]] const std::string& method_name,
 	size_t vector_size,
 	int iterations,
 	int thread_count) {

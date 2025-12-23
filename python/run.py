@@ -183,8 +183,8 @@ class InterviewDemoConsole:
         vector_size = self.get_int_input("Vector size", 100000)
         iterations = self.get_int_input("Number of iterations", 100)
         thread_count = self.get_int_input("Number of threads", 1)
-        
-        print(f"\nRunning comparative benchmark...")
+
+        print("\nRunning comparative benchmark...")
         print(f"Vector size: {vector_size}, Iterations: {iterations}, Threads: {thread_count}")
         print("(Benchmark will be implemented via pybind11)")
 
@@ -228,8 +228,8 @@ class InterviewDemoConsole:
         """Run task 3 benchmark"""
         element_count = self.get_int_input("Number of elements", 100000)
         lookup_iterations = self.get_int_input("Number of lookup iterations", 1000000)
-        
-        print(f"\nRunning benchmark...")
+
+        print("\nRunning benchmark...")
         print(f"Elements: {element_count}, Lookup iterations: {lookup_iterations}")
         print("(Benchmark will be implemented via pybind11)")
 

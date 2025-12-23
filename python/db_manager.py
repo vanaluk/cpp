@@ -4,7 +4,6 @@ Manager for working with PostgreSQL database
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from datetime import datetime
 import json
 from typing import Optional, Dict, List
 
