@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # PostgreSQL for storing results
+  postgres:
+    image: postgres:14
+    container_name: cpp_interview_postgres
+    environment:
+      POSTGRES_USER: cpp_interview
+      POSTGRES_PASSWORD: cpp_interview_pass
+      POSTGRES_DB: cpp_interview_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cpp_interview"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cpp_interview_network
+
+  # Main application (interactive console)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cpp_interview_app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: cpp_interview_db
+      DB_USER: cpp_interview
+      DB_PASSWORD: cpp_interview_pass
+    volumes:
+      - .:/app
+      - build_cache:/app/build
+    stdin_open: true
+    tty: true
+    networks:
+      - cpp_interview_network
+    # Default - interactive console
+    command: python3 python/run.py
+
+  # Boost.Asio HTTP server for benchmarks (REST API)
+  benchmark_server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cpp_interview_benchmark_server
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: cpp_interview_db
+      DB_USER: cpp_interview
+      DB_PASSWORD: cpp_interview_pass
+    ports:
+      - "8080:8080"
+    volumes:
+      - build_cache:/app/build
+    networks:
+      - cpp_interview_network
+    command: /app/build/asio_server 8080
+    profiles:
+      - server
+
+  # Utility for viewing results
+  results_viewer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cpp_interview_results
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: cpp_interview_db
+      DB_USER: cpp_interview
+      DB_PASSWORD: cpp_interview_pass
+    networks:
+      - cpp_interview_network
+    command: python3 python/view_results.py
+    profiles:
+      - viewer
+
+volumes:
+  postgres_data:
+  build_cache:
+
+networks:
+  cpp_interview_network:
+    driver: bridge

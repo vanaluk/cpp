@@ -1,0 +1,20 @@
+CompileFlags:
+  Add:
+    - "-std=c++17"
+    - "-Wall"
+    - "-Wextra"
+    - "-pedantic"
+  CompilationDatabase: build
+
+Diagnostics:
+  ClangTidy:
+    Add:
+      - modernize*
+      - performance*
+      - readability*
+      - bugprone*
+
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes

@@ -1,0 +1,46 @@
+# Build directories
+build/
+cmake-build-*/
+*.o
+*.a
+*.so
+*.dylib
+
+# Executables
+CppInterviewDemo
+cpp_interview_bindings*.so
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Database
+*.db
+*.sqlite
+
+# Perf reports
+perf.data
+perf.data.old
+*.perf
+
+# OS
+.DS_Store
+Thumbs.db
+
+promt.txt
+status.md
+task.md
+docs/
+cpp.code-workspace
