@@ -14,13 +14,11 @@ cd cpp
 ### 1.2 Start Interactive Console
 
 ```bash
-# Start PostgreSQL + console
-docker-compose up
+# Start PostgreSQL + interactive console (recommended)
+docker-compose run --rm app
 
-# In background mode
+# Alternative: Start in background, then connect
 docker-compose up -d
-
-# Connect to console (if running in background)
 docker-compose exec app python3 python/run.py
 ```
 
@@ -89,8 +87,28 @@ cd ..
 
 ### 2.3 Configure PostgreSQL
 
+**Option A: Quick setup (use your system user, no password needed)**
+
 ```bash
-# Create DB
+# Create PostgreSQL user matching your system username (one-time setup)
+sudo -u postgres createuser -s $USER
+createdb cpp_interview_db
+psql -d cpp_interview_db -f sql/init.sql
+
+export DB_HOST=
+export DB_PORT=5432
+export DB_NAME=cpp_interview_db
+export DB_USER=$USER
+export DB_PASSWORD=
+```
+
+> **Note:** `DB_HOST=` (empty) uses Unix socket with peer authentication.
+> If you set `DB_HOST=localhost`, PostgreSQL requires password authentication.
+
+**Option B: Dedicated user with password**
+
+```bash
+# Create DB and user
 sudo -u postgres createdb cpp_interview_db
 sudo -u postgres psql -c "CREATE USER cpp_interview WITH PASSWORD 'cpp_interview_pass';"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE cpp_interview_db TO cpp_interview;"
@@ -292,7 +310,7 @@ curl -s "$SERVER/results" | jq
 
 | Method | Command |
 |--------|---------|
-| Docker (console) | `docker-compose up` |
+| Docker (interactive) | `docker-compose run --rm app` |
 | Docker (auto) | `docker-compose run --rm app python3 python/run.py --autorun` |
 | Local (console) | `python3 python/run.py` |
 | HTTP API | `curl http://localhost:8080/benchmark/task1` |
@@ -313,8 +331,12 @@ curl -s "$SERVER/results" | jq
 | Action | Command |
 |--------|---------|
 | Build | `docker-compose build` |
-| Start console | `docker-compose up` |
+| Rebuild (no cache) | `docker-compose build --no-cache` |
+| Start interactive console | `docker-compose run --rm app` |
 | Start server | `docker-compose --profile server up` |
 | Stop | `docker-compose down` |
 | Clear data | `docker-compose down -v` |
 | Logs | `docker-compose logs -f` |
+| List project images | `docker images \| grep cpp` |
+| Remove project images | `docker-compose down --rmi all` |
+| Full cleanup (images + data) | `docker-compose down -v --rmi all` |

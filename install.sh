@@ -90,27 +90,24 @@ install_dependencies_fedora() {
         perf
 }
 
-# Check Docker (skip if --no-docker flag is set)
+# Check Docker (skip if --local flag is set)
 if [ "$NO_DOCKER" = true ]; then
-    echo -e "${YELLOW}Docker disabled by --no-docker flag. Using local build.${NC}"
+    echo -e "${YELLOW}Docker disabled by --local flag. Using local build.${NC}"
     echo ""
 elif check_command docker && check_command docker-compose; then
     echo ""
     echo -e "${GREEN}Docker detected! Using Docker for build.${NC}"
     echo ""
     
-    # Build Docker image
-    echo "Building Docker image..."
+    # Build Docker image (uses cache if available)
+    echo "Building Docker image (using cache if available)..."
     docker-compose build
     
     echo ""
     echo -e "${GREEN}✓ Installation completed successfully!${NC}"
     echo ""
-    echo "To run the project use:"
-    echo "  docker-compose up"
-    echo ""
-    echo "Or to run Python script directly:"
-    echo "  docker-compose run --rm app python3 python/run.py"
+    echo "To run the interactive console:"
+    echo "  docker-compose run --rm app"
     exit 0
 fi
 
@@ -136,7 +133,8 @@ if ! pkg-config --exists libpq; then
     MISSING_DEPS+=("libpq-dev (PostgreSQL)")
 fi
 
-if ! pkg-config --exists libboost_system; then
+# Check Boost by looking for header file (pkg-config doesn't always work for Boost)
+if [ ! -f /usr/include/boost/version.hpp ] && ! pkg-config --exists boost; then
     MISSING_DEPS+=("libboost-all-dev (Boost)")
 fi
 

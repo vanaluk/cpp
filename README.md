@@ -2,6 +2,11 @@
 
 A demonstration project for preparing for a C++ Developer interview. The project demonstrates solutions to three test tasks with the ability to measure and compare performance of different implementations.
 
+## Requirements
+
+- **Tested on:** Ubuntu 22.04
+- **Recommended:** Ubuntu with Docker installed
+
 ## Technology Stack
 
 | Technology | Purpose |
@@ -54,7 +59,7 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed installation and running instruc
 
 ```bash
 # Start PostgreSQL + interactive console
-docker-compose up
+docker-compose run --rm app
 ```
 
 This will start:
@@ -209,6 +214,16 @@ docker-compose run --rm app perf record ./build/CppInterviewDemo
 
 ## Environment Variables
 
+**Option A: Peer authentication (no password, Unix socket)**
+```bash
+export DB_HOST=        # Empty = Unix socket (peer auth)
+export DB_PORT=5432
+export DB_NAME=cpp_interview_db
+export DB_USER=$USER
+export DB_PASSWORD=
+```
+
+**Option B: Password authentication (TCP/IP)**
 ```bash
 export DB_HOST=localhost
 export DB_PORT=5432
@@ -216,6 +231,8 @@ export DB_NAME=cpp_interview_db
 export DB_USER=cpp_interview
 export DB_PASSWORD=cpp_interview_pass
 ```
+
+> **Note:** Docker uses Option B internally. For local development, Option A is easier.
 
 ---
 

@@ -117,6 +117,14 @@ public:
 		return use_count() == 0;
 	}
 
+	explicit operator bool() const noexcept {
+		return ptr_ != nullptr;
+	}
+
+	bool operator!() const noexcept {
+		return ptr_ == nullptr;
+	}
+
 private:
 	T* ptr_;
 	std::atomic<int>* ref_count_;

@@ -22,6 +22,10 @@ find_package(Threads REQUIRED)
 
 # Pybind11 (optional)
 if(BUILD_PYBIND11)
+    # Find Python 3.8+ explicitly to avoid using old Python versions
+    find_package(Python3 3.8 REQUIRED COMPONENTS Interpreter Development)
+    set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
+    
     find_package(pybind11 QUIET)
     if(NOT pybind11_FOUND)
         message(STATUS "pybind11 not found, fetching from GitHub...")
