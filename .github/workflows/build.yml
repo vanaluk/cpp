@@ -1,0 +1,87 @@
+name: Build and Test
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+  push:
+    branches: [main, master, develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: cpp_interview
+          POSTGRES_PASSWORD: cpp_interview_pass
+          POSTGRES_DB: cpp_interview_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            g++ \
+            python3 \
+            python3-pip \
+            python3-dev \
+            libboost-all-dev \
+            libpq-dev \
+            postgresql-client
+
+      - name: Install Python dependencies
+        run: pip3 install -r python/requirements.txt
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+      - name: Initialize database
+        env:
+          PGPASSWORD: cpp_interview_pass
+        run: |
+          psql -h localhost -U cpp_interview -d cpp_interview_db -f sql/init.sql
+
+      - name: Run C++ binary (smoke test)
+        run: ./build/CppInterviewDemo --help || true
+
+      - name: Verify Python bindings
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: cpp_interview_db
+          DB_USER: cpp_interview
+          DB_PASSWORD: cpp_interview_pass
+        run: |
+          python3 -c "import sys; sys.path.insert(0, 'build'); import cpp_interview_bindings; print('Bindings OK')"
+
+  docker-build:
+    runs-on: ubuntu-22.04
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t cpp-interview-demo .
+
+      - name: Test Docker image
+        run: |
+          docker run --rm cpp-interview-demo ./build/CppInterviewDemo --help || true
+
