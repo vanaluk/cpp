@@ -17,7 +17,7 @@ A demonstration project for preparing for a C++ Developer interview. The project
 ## Project Structure
 
 ```
-cpp-interview-demo/
+cpp/
 ├── CMakeLists.txt          # CMake configuration
 ├── Dockerfile              # Docker image
 ├── docker-compose.yml      # Container orchestration
@@ -149,30 +149,7 @@ Total records: 3
 
 ## 🚀 Quick Start
 
-### Option 1: Docker (recommended)
-
-```bash
-# Clone and run
-git clone <repo>
-cd cpp-interview-demo
-
-# Run (PostgreSQL + interactive console)
-docker-compose up
-```
-
-### Option 2: Local Installation
-
-```bash
-# Ubuntu/Debian
-sudo apt-get install -y build-essential cmake python3 python3-pip \
-    libboost-all-dev libpq-dev postgresql-client
-
-# Install and build
-./install.sh
-
-# Run
-python3 python/run.py
-```
+See [QUICKSTART.md](QUICKSTART.md) for detailed installation and running instructions.
 
 ---
 

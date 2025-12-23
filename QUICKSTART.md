@@ -1,8 +1,63 @@
 # Quick Start Guide
 
-## 1. Without Docker (local build)
+## 1. Via Docker (recommended)
 
-### 1.1 Install Dependencies
+### 1.1 Build
+
+```bash
+cd cpp
+
+# Run script (automatically detects Docker)
+./install.sh
+```
+
+### 1.2 Start Interactive Console
+
+```bash
+# Start PostgreSQL + console
+docker-compose up
+
+# In background mode
+docker-compose up -d
+
+# Connect to console (if running in background)
+docker-compose exec app python3 python/run.py
+```
+
+### 1.3 Run Specific Commands
+
+```bash
+# Run all benchmarks automatically
+docker-compose run --rm app python3 python/run.py --autorun
+
+# View results
+docker-compose run --rm app python3 python/view_results.py
+
+# View statistics
+docker-compose run --rm app python3 python/view_results.py --stats
+
+# Export results
+docker-compose run --rm app python3 python/view_results.py --export csv
+
+# Run C++ binary directly
+docker-compose run --rm app ./build/CppInterviewDemo
+```
+
+### 1.4 Stop
+
+```bash
+# Stop all containers
+docker-compose down
+
+# Stop and delete DB data
+docker-compose down -v
+```
+
+---
+
+## 2. Without Docker (local build)
+
+### 2.1 Install Dependencies
 
 ```bash
 # Ubuntu/Debian
@@ -20,7 +75,7 @@ sudo dnf install -y \
     boost-devel libpq-devel postgresql
 ```
 
-### 1.2 Build Project
+### 2.2 Build Project
 
 ```bash
 cd cpp
@@ -35,7 +90,7 @@ cmake --build . -j$(nproc)
 cd ..
 ```
 
-### 1.3 Configure PostgreSQL
+### 2.3 Configure PostgreSQL
 
 ```bash
 # Create DB
@@ -54,7 +109,7 @@ export DB_USER=cpp_interview
 export DB_PASSWORD=cpp_interview_pass
 ```
 
-### 1.4 Run Tests
+### 2.4 Run Tasks
 
 ```bash
 # Interactive console
@@ -69,7 +124,7 @@ python3 python/run.py
 # [6] - Start HTTP server
 ```
 
-### 1.5 View Results
+### 2.5 View Results
 
 ```bash
 # All results
@@ -101,64 +156,6 @@ python3 python/view_results.py --watch
 
 # Limit number of records
 python3 python/view_results.py --limit 10
-```
-
----
-
-## 2. Via Docker
-
-### 2.1 Build
-
-```bash
-cd cpp
-
-# Build image
-docker-compose build
-
-# Or via script (automatically detects Docker)
-./install.sh
-```
-
-### 2.2 Start Interactive Console
-
-```bash
-# Start PostgreSQL + console
-docker-compose up
-
-# In background mode
-docker-compose up -d
-
-# Connect to console (if running in background)
-docker-compose exec app python3 python/run.py
-```
-
-### 2.3 Run Specific Commands
-
-```bash
-# Run all benchmarks automatically
-docker-compose run --rm app python3 python/run.py --autorun
-
-# View results
-docker-compose run --rm app python3 python/view_results.py
-
-# View statistics
-docker-compose run --rm app python3 python/view_results.py --stats
-
-# Export results
-docker-compose run --rm app python3 python/view_results.py --export csv
-
-# Run C++ binary directly
-docker-compose run --rm app ./build/CppInterviewDemo
-```
-
-### 2.4 Stop
-
-```bash
-# Stop all containers
-docker-compose down
-
-# Stop and delete DB data
-docker-compose down -v
 ```
 
 ---
@@ -294,21 +291,21 @@ curl -s "$SERVER/results" | jq
 
 ## 4. Command Summary Table
 
-### Run Tests
+### Run Tasks
 
 | Method | Command |
 |--------|---------|
-| Local (console) | `python3 python/run.py` |
 | Docker (console) | `docker-compose up` |
 | Docker (auto) | `docker-compose run --rm app python3 python/run.py --autorun` |
+| Local (console) | `python3 python/run.py` |
 | HTTP API | `curl http://localhost:8080/benchmark/task1` |
 
 ### View Results
 
 | Method | Command |
 |--------|---------|
-| Local | `python3 python/view_results.py` |
 | Docker | `docker-compose run --rm app python3 python/view_results.py` |
+| Local | `python3 python/view_results.py` |
 | HTTP API | `curl http://localhost:8080/results` |
 | Statistics | `python3 python/view_results.py --stats` |
 | Export CSV | `python3 python/view_results.py --export csv` |
