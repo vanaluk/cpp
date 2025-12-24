@@ -277,10 +277,16 @@ private:
 					return "O(n)";
 				};
 
-				// Determine recommendation based on actual results
-				std::string recommendation= "std::unordered_map for best lookup performance";
-				if(umap_result.lookup_time_ns > map_result.lookup_time_ns) {
+				// Determine recommendation based on actual results (find fastest lookup among all containers)
+				std::string recommendation;
+				if(umap_result.lookup_time_ns <= map_result.lookup_time_ns &&
+					umap_result.lookup_time_ns <= vec_result.lookup_time_ns) {
+					recommendation= "std::unordered_map for best lookup performance";
+				} else if(map_result.lookup_time_ns <= umap_result.lookup_time_ns &&
+					map_result.lookup_time_ns <= vec_result.lookup_time_ns) {
 					recommendation= "std::map for this dataset size";
+				} else {
+					recommendation= "std::vector<pair> for this dataset size";
 				}
 
 				std::vector<BenchmarkResult> results= {map_result, umap_result, vec_result};
