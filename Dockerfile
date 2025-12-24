@@ -1,5 +1,8 @@
 FROM ubuntu:22.04
 
+# Build mode argument: Release (default, ULL optimizations) or Debug
+ARG BUILD_TYPE=Release
+
 # Create non-root user for security
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
@@ -15,6 +18,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     postgresql-client \
     linux-tools-generic \
+    gdb \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -27,12 +31,15 @@ WORKDIR /app
 # Copy source files
 COPY . .
 
-# Build project
+# Build project with specified build type
 RUN mkdir -p build && \
     cd build && \
-    cmake .. -DCMAKE_BUILD_TYPE=Release && \
+    cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} && \
     cmake --build . -j$(nproc) && \
     cmake --install . --prefix /usr/local
+
+# Store build type for runtime info
+RUN echo "BUILD_TYPE=${BUILD_TYPE}" > /app/.build_info
 
 # Change ownership to non-root user
 RUN chown -R appuser:appgroup /app

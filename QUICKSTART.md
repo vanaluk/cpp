@@ -7,15 +7,26 @@
 ```bash
 cd cpp
 
-# Run script (automatically detects Docker)
+# Build Release (default, Ultra Low Latency optimizations)
+docker-compose build app
+
+# Build Debug (for development and debugging)
+docker-compose --profile debug build app-debug
+
+# Or via install script (builds Release by default)
 ./install.sh
 ```
+
+> **Note:** Docker supports both **Release** (ULL optimizations) and **Debug** modes via separate services.
 
 ### 1.2 Start Interactive Console
 
 ```bash
-# Start PostgreSQL + interactive console (recommended)
+# Release mode (default, ULL optimizations)
 docker-compose run --rm app
+
+# Debug mode (with debug symbols, no optimizations)
+docker-compose --profile debug run --rm app-debug
 
 # Alternative: Start in background, then connect
 docker-compose up -d
@@ -90,15 +101,35 @@ cd cpp
 # Option 1: Via script (force local build, no Docker)
 ./install.sh --local
 
-# Option 2: Manually
+# Option 2: Manually - Release build (Ultra Low Latency optimizations)
 mkdir -p build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build . -j$(nproc)
+cd ..
+
+# Option 3: Debug build (for development and debugging)
+mkdir -p build-debug && cd build-debug
+cmake .. -DCMAKE_BUILD_TYPE=Debug
 cmake --build . -j$(nproc)
 cd ..
 ```
 
 > **Note:** Use `--local` flag to guarantee local build even if Docker is installed.
 > Use `./install.sh --help` to see all available options.
+
+#### Build Modes Comparison
+
+| Mode | Command | Use Case |
+|------|---------|----------|
+| **Release** | `cmake .. -DCMAKE_BUILD_TYPE=Release` | Production, benchmarks, ULL optimizations |
+| **Debug** | `cmake .. -DCMAKE_BUILD_TYPE=Debug` | Development, debugging with symbols |
+
+**Release mode** enables Ultra Low Latency optimizations:
+- `-O3 -march=native -mtune=native` — CPU-specific optimizations
+- `-flto` — Link-Time Optimization
+- `-fno-exceptions -fno-rtti` — Disable C++ overhead
+- `-ffast-math -funroll-loops` — Aggressive optimizations
+- See `CMakeLists.txt` for full list
 
 ### 2.3 Configure PostgreSQL
 
@@ -415,6 +446,27 @@ ctest -R Task2 --verbose
 | Local (all) | `cd build && ctest --output-on-failure` |
 | Local (verbose) | `cd build && ctest -V` |
 | List tests | `cd build && ctest -N` |
+
+### Build Modes
+
+| Mode | Docker | Local | Use Case |
+|------|--------|-------|----------|
+| **Release (ULL)** | `docker-compose build app` | `cmake -B build -DCMAKE_BUILD_TYPE=Release` | Production, benchmarks |
+| **Debug** | `docker-compose --profile debug build app-debug` | `cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug` | Development, debugging |
+
+**Docker Run Commands:**
+| Mode | Command |
+|------|---------|
+| Release | `docker-compose run --rm app` |
+| Debug | `docker-compose --profile debug run --rm app-debug` |
+| Release Server | `docker-compose --profile server up` |
+| Debug Server | `docker-compose --profile debug-server up` (port 8081) |
+
+**Release mode optimizations:**
+- `-O3 -march=native -mtune=native` — CPU-specific
+- `-flto` — Link-Time Optimization
+- `-fno-exceptions -fno-rtti` — Disable C++ overhead
+- `-ffast-math -funroll-loops` — Aggressive optimizations
 
 ### Docker Management
 

@@ -20,11 +20,13 @@ services:
     networks:
       - cpp_interview_network
 
-  # Main application (interactive console)
+  # Main application (interactive console) - Release build with ULL optimizations
   app:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        BUILD_TYPE: Release
     container_name: cpp_interview_app
     depends_on:
       postgres:
@@ -37,7 +39,7 @@ services:
       DB_PASSWORD: cpp_interview_pass
     volumes:
       - .:/app
-      - build_cache:/app/build
+      - build_cache_release:/app/build
     stdin_open: true
     tty: true
     networks:
@@ -48,11 +50,43 @@ services:
     # Default - interactive console
     command: python3 python/run.py
 
-  # Boost.Asio HTTP server for benchmarks (REST API)
+  # Debug build for development and debugging
+  app-debug:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_TYPE: Debug
+    container_name: cpp_interview_app_debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: cpp_interview_db
+      DB_USER: cpp_interview
+      DB_PASSWORD: cpp_interview_pass
+    volumes:
+      - .:/app
+      - build_cache_debug:/app/build
+    stdin_open: true
+    tty: true
+    networks:
+      - cpp_interview_network
+    stop_signal: SIGTERM
+    stop_grace_period: 5s
+    command: python3 python/run.py
+    profiles:
+      - debug
+
+  # Boost.Asio HTTP server for benchmarks (REST API) - Release
   benchmark_server:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        BUILD_TYPE: Release
     container_name: cpp_interview_benchmark_server
     depends_on:
       postgres:
@@ -66,12 +100,39 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - build_cache:/app/build
+      - build_cache_release:/app/build
     networks:
       - cpp_interview_network
     command: /app/build/asio_server 8080
     profiles:
       - server
+
+  # Boost.Asio HTTP server - Debug build
+  benchmark_server_debug:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_TYPE: Debug
+    container_name: cpp_interview_benchmark_server_debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: cpp_interview_db
+      DB_USER: cpp_interview
+      DB_PASSWORD: cpp_interview_pass
+    ports:
+      - "8081:8080"
+    volumes:
+      - build_cache_debug:/app/build
+    networks:
+      - cpp_interview_network
+    command: /app/build/asio_server 8080
+    profiles:
+      - debug-server
 
   # Utility for viewing results
   results_viewer:
@@ -96,7 +157,8 @@ services:
 
 volumes:
   postgres_data:
-  build_cache:
+  build_cache_release:
+  build_cache_debug:
 
 networks:
   cpp_interview_network:

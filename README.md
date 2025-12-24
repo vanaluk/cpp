@@ -18,6 +18,32 @@ A demonstration project for preparing for a C++ Developer interview. The project
 | **Docker** | Full environment: build, run, test |
 | **CMake** | Cross-platform build |
 
+## ⚡ Build Modes
+
+The project supports two build configurations optimized for different use cases:
+
+| Mode | Use Case | Key Features |
+|------|----------|--------------|
+| **Debug** | Development, debugging | `-g -O0`, full symbols, assertions enabled |
+| **Release** | Production, benchmarks | Ultra Low Latency optimizations (see below) |
+
+### Ultra Low Latency (ULL) Flags (Release only)
+
+| Flag | Purpose |
+|------|---------|
+| `-O3 -march=native -mtune=native` | Maximum CPU-specific optimizations |
+| `-flto` | Link-Time Optimization |
+| `-ffast-math` | Aggressive floating-point optimizations |
+| `-funroll-loops` | Loop unrolling |
+| `-fomit-frame-pointer` | Free up register (rbp) |
+| `-fno-exceptions -fno-rtti` | Disable C++ overhead |
+| `-fno-stack-protector` | Disable stack canaries |
+| `-fno-plt` | Direct function calls |
+| `-fprefetch-loop-arrays` | Cache prefetch hints |
+| `-falign-functions=32 -falign-loops=32` | Cache-line alignment |
+
+> **Note:** pybind11 module and Boost.Test require exceptions/RTTI and compile with `-fexceptions -frtti` even in Release mode.
+
 
 ## Project Structure
 
@@ -50,6 +76,24 @@ cpp/
 ## 🚀 Quick Start
 
 See [QUICKSTART.md](QUICKSTART.md) for detailed installation and running instructions.
+
+### Build Commands Summary
+
+```bash
+# Docker Release (ULL optimizations)
+docker-compose build app
+docker-compose run --rm app
+
+# Docker Debug (with debug symbols)
+docker-compose --profile debug build app-debug
+docker-compose --profile debug run --rm app-debug
+
+# Local Release build (Ultra Low Latency)
+cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j$(nproc)
+
+# Local Debug build (for development)
+cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build-debug -j$(nproc)
+```
 
 ---
 
