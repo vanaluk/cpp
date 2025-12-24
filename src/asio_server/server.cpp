@@ -149,6 +149,13 @@ private:
 			return json_response(code, json.str());
 		}
 
+		double safe_ops_per_sec(double operations, long long duration_ns) {
+			if(duration_ns <= 0) {
+				return 0.0;
+			}
+			return operations / (static_cast<double>(duration_ns) / 1e9);
+		}
+
 		std::string process_request(const std::string& request) {
 			// Extract URL from request
 			std::string url;
@@ -177,7 +184,7 @@ private:
 
 				// Call real C++ benchmark function
 				long long duration= benchmark_weak_ptr_lock(static_cast<int>(iterations), static_cast<int>(threads));
-				double ops_per_sec= static_cast<double>(iterations) / (duration / 1e9);
+				double ops_per_sec= safe_ops_per_sec(static_cast<double>(iterations), duration);
 
 				std::stringstream json;
 				json << "{\n";
@@ -231,7 +238,7 @@ private:
 					json << "    {\"name\": \"" << methods[i].first << "\", ";
 					json << "\"time_ns\": " << methods[i].second << ", ";
 					json << "\"ops_per_sec\": " << std::fixed
-						 << (static_cast<double>(iterations) / (methods[i].second / 1e9)) << "}";
+						 << safe_ops_per_sec(static_cast<double>(iterations), methods[i].second) << "}";
 					if(i < methods.size() - 1)
 						json << ",";
 					json << "\n";
@@ -295,7 +302,7 @@ private:
 					json << "\"memory_bytes\": " << result.memory_usage_bytes << ", ";
 					json << "\"complexity\": \"" << get_complexity(result.container_name) << "\", ";
 					json << "\"ops_per_sec\": " << std::fixed
-						 << (static_cast<double>(lookups) / (result.lookup_time_ns / 1e9)) << "}";
+						 << safe_ops_per_sec(static_cast<double>(lookups), result.lookup_time_ns) << "}";
 					if(i < results.size() - 1)
 						json << ",";
 					json << "\n";
