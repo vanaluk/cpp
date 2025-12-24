@@ -1,7 +1,11 @@
 #include "container_benchmark.hpp"
-#include <iostream>
-#include <random>
 #include <algorithm>
+#include <chrono>
+#include <iostream>
+#include <map>
+#include <random>
+#include <unordered_map>
+#include <vector>
 
 BenchmarkResult benchmark_map(int element_count, int lookup_iterations) {
 	std::map<int, std::string> container;
