@@ -2,9 +2,7 @@
 
 #include <vector>
 #include <algorithm>
-#include <iterator>
 #include <string>
-#include <functional>
 
 // Function declarations for demonstration and benchmarks
 void demonstrate_vector_erase();
