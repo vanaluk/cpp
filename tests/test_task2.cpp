@@ -266,11 +266,11 @@ constexpr long long PARTITION_THRESHOLD_NS= 10'000'000; // 10ms
 void check_performance(const char* operation, long long actual_ns, long long threshold_ns) {
 	bool passed= actual_ns <= threshold_ns;
 	if(!passed) {
-		double exceeded_by= (static_cast<double>(actual_ns) / threshold_ns - 1.0) * 100.0;
-		BOOST_CHECK_MESSAGE(passed, operation << " exceeded threshold: " << actual_ns / 1'000'000.0 << "ms actual vs " << threshold_ns / 1'000'000.0 << "ms threshold " << "(+" << exceeded_by << "% over limit)");
+		double exceeded_by= (static_cast<double>(actual_ns) / static_cast<double>(threshold_ns) - 1.0) * 100.0;
+		BOOST_CHECK_MESSAGE(passed, operation << " exceeded threshold: " << static_cast<double>(actual_ns) / 1'000'000.0 << "ms actual vs " << static_cast<double>(threshold_ns) / 1'000'000.0 << "ms threshold " << "(+" << exceeded_by << "% over limit)");
 	} else {
-		double margin= (1.0 - static_cast<double>(actual_ns) / threshold_ns) * 100.0;
-		BOOST_CHECK_MESSAGE(passed, operation << ": " << actual_ns / 1'000'000.0 << "ms (" << margin << "% under threshold)");
+		double margin= (1.0 - static_cast<double>(actual_ns) / static_cast<double>(threshold_ns)) * 100.0;
+		BOOST_CHECK_MESSAGE(passed, operation << ": " << static_cast<double>(actual_ns) / 1'000'000.0 << "ms (" << margin << "% under threshold)");
 	}
 }
 } // namespace
