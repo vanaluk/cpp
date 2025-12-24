@@ -82,11 +82,11 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed installation and running instruc
 ```bash
 # Docker Release (ULL optimizations)
 docker-compose build app
-docker-compose run --rm app
+docker-compose run --rm --service-ports app
 
 # Docker Debug (with debug symbols)
 docker-compose --profile debug build app-debug
-docker-compose --profile debug run --rm app-debug
+docker-compose --profile debug run --rm --service-ports app-debug
 
 # Local Release build (Ultra Low Latency)
 cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j$(nproc)
@@ -103,8 +103,10 @@ cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build-debug -j$(n
 
 ```bash
 # Start PostgreSQL + interactive console
-docker-compose run --rm app
+docker-compose run --rm --service-ports app
 ```
+
+> **Note:** Use `--service-ports` to enable port mapping for menu option `[6] Start Boost.Asio server`.
 
 This will start:
 - PostgreSQL (with automatic DB initialization)

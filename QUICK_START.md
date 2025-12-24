@@ -25,15 +25,17 @@ docker-compose --profile debug build app-debug
 
 ```bash
 # Release mode (default, ULL optimizations)
-docker-compose run --rm app
+docker-compose run --rm --service-ports app
 
 # Debug mode (with debug symbols, no optimizations)
-docker-compose --profile debug run --rm app-debug
+docker-compose --profile debug run --rm --service-ports app-debug
 
 # Alternative: Start in background, then connect
 docker-compose up -d
 docker-compose exec app python3 python/run.py
 ```
+
+> **Note:** Use `--service-ports` flag to enable port mapping for menu option `[6] Start Boost.Asio server`.
 
 ### 1.3 Run Specific Commands
 
@@ -425,7 +427,7 @@ ctest -R Task2 --verbose
 
 | Method | Command |
 |--------|---------|
-| Docker (interactive) | `docker-compose run --rm app` |
+| Docker (interactive) | `docker-compose run --rm --service-ports app` |
 | Docker (auto) | `docker-compose run --rm app python3 python/run.py --autorun` |
 | Local (console) | `python3 python/run.py` |
 | HTTP API | `curl http://localhost:8080/benchmark/task1` |
@@ -463,8 +465,8 @@ ctest -R Task2 --verbose
 **Docker Run Commands:**
 | Mode | Command |
 |------|---------|
-| Release | `docker-compose run --rm app` |
-| Debug | `docker-compose --profile debug run --rm app-debug` |
+| Release | `docker-compose run --rm --service-ports app` |
+| Debug | `docker-compose --profile debug run --rm --service-ports app-debug` |
 | Release Server | `docker-compose --profile server up` |
 | Debug Server | `docker-compose --profile debug-server up` (port 8081) |
 
