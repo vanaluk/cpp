@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <sstream>
 #include <iomanip>
+#include <fstream>
 
 /**
  * PostgreSQL client for saving and retrieving benchmark results
