@@ -9,12 +9,14 @@ cd cpp
 
 # Build Release (default, Ultra Low Latency optimizations)
 docker-compose build app
+# Or via install script (builds Release by default)
+./install.sh
 
 # Build Debug (for development and debugging)
 docker-compose --profile debug build app-debug
+# Or via install script
+./install.sh --local
 
-# Or via install script (builds Release by default)
-./install.sh
 ```
 
 > **Note:** Docker supports both **Release** (ULL optimizations) and **Debug** modes via separate services.
