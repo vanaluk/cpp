@@ -26,7 +26,13 @@ public:
 	// Connect to PostgreSQL using environment variables
 	bool connect() {
 		if(conn_ != nullptr) {
-			return true; // Already connected
+			// Check if existing connection is still healthy
+			if(PQstatus(conn_) == CONNECTION_OK) {
+				return true; // Already connected and healthy
+			}
+			// Connection exists but is unhealthy (e.g., network timeout, DB restart)
+			// Clean up before reconnecting
+			disconnect();
 		}
 
 		std::string host = get_env("DB_HOST", "postgres");
@@ -156,12 +162,19 @@ public:
 			json << "      \"task_name\": \"" << escape_json(PQgetvalue(res, i, 3)) << "\",\n";
 			json << "      \"method_name\": \"" << escape_json(PQgetvalue(res, i, 4)) << "\",\n";
 			json << "      \"execution_time_ns\": " << PQgetvalue(res, i, 5) << ",\n";
-			json << "      \"operations_per_second\": " << PQgetvalue(res, i, 6) << ",\n";
+			// Handle nullable operations_per_second field
+			json << "      \"operations_per_second\": ";
+			if(PQgetisnull(res, i, 6) != 0) {
+				json << "null";
+			} else {
+				json << PQgetvalue(res, i, 6);
+			}
+			json << ",\n";
 			json << "      \"thread_count\": " << PQgetvalue(res, i, 7) << ",\n";
 			json << "      \"build_type\": \"" << escape_json(PQgetvalue(res, i, 8)) << "\"";
-			
+
 			// Handle nullable notes field
-			if (!PQgetisnull(res, i, 9)) {
+			if(PQgetisnull(res, i, 9) == 0) {
 				json << ",\n      \"notes\": \"" << escape_json(PQgetvalue(res, i, 9)) << "\"";
 			}
 			json << "\n    }";
@@ -212,7 +225,7 @@ private:
 	}
 
 	static std::string build_error_json(const std::string& error) {
-		return "{\"results\": [], \"total\": 0, \"error\": \"" + error + "\"}";
+		return "{\"results\": [], \"total\": 0, \"error\": \"" + escape_json(error.c_str()) + "\"}";
 	}
 };
 

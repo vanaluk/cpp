@@ -134,12 +134,16 @@ class InterviewDemoConsole:
             # Handle EOF (e.g., when stdin is closed)
             raise KeyboardInterrupt()
 
-    def get_int_input(self, prompt: str, default: int) -> int:
-        """Get integer input from user"""
+    def get_int_input(self, prompt: str, default: int, min_value: int = None) -> int:
+        """Get integer input from user with optional minimum value validation"""
         while True:
             try:
                 value = self.get_user_input(prompt, str(default))
-                return int(value)
+                result = int(value)
+                if min_value is not None and result < min_value:
+                    print(f"Error: value must be at least {min_value}")
+                    continue
+                return result
             except ValueError:
                 print("Error: enter an integer")
 
@@ -190,15 +194,15 @@ class InterviewDemoConsole:
         """Run task 1 benchmark"""
         if not self.check_cpp_module():
             return
-        
-        iterations = self.get_int_input("Number of iterations", 1000000)
-        thread_count = self.get_int_input("Number of threads", 1)
-        
+
+        iterations = self.get_int_input("Number of iterations", 1000000, min_value=1)
+        thread_count = self.get_int_input("Number of threads", 1, min_value=1)
+
         print(f"\nRunning benchmark: iterations={iterations}, threads={thread_count}")
-        
+
         try:
             execution_time_ns = cpp.benchmark_weak_ptr_lock(iterations, thread_count)
-            
+
             # Display results
             execution_time_ms = execution_time_ns / 1e6
             operations_per_second = iterations / (execution_time_ns / 1e9)
@@ -206,7 +210,7 @@ class InterviewDemoConsole:
             print("\nResults:")
             print(f"  Execution time: {execution_time_ms:.2f} ms")
             print(f"  Operations per second: {operations_per_second:,.0f}")
-            
+
             if self.db.is_connected():
                 self.db.save_benchmark_result(
                     task_number=1,
@@ -215,7 +219,7 @@ class InterviewDemoConsole:
                     execution_time_ns=execution_time_ns,
                     parameters={"iterations": iterations},
                     thread_count=thread_count,
-                    operations_per_second=operations_per_second
+                    operations_per_second=operations_per_second,
                 )
                 print("  ✓ Results saved to DB")
         except Exception as e:
@@ -230,9 +234,9 @@ class InterviewDemoConsole:
         print("[4] Copy to new vector method")
         print("[5] Run comparative benchmark of all methods")
         print("[0] Back to main menu")
-        
+
         choice = self.get_user_input("Select option", "0")
-        
+
         if choice == "5":
             self.run_task2_benchmark()
         elif choice in ["1", "2", "3", "4"]:
@@ -250,10 +254,10 @@ class InterviewDemoConsole:
         """Run task 2 benchmark"""
         if not self.check_cpp_module():
             return
-        
-        vector_size = self.get_int_input("Vector size", 100000)
-        iterations = self.get_int_input("Number of iterations", 100)
-        thread_count = self.get_int_input("Number of threads", 1)
+
+        vector_size = self.get_int_input("Vector size", 100000, min_value=1)
+        iterations = self.get_int_input("Number of iterations", 100, min_value=1)
+        thread_count = self.get_int_input("Number of threads", 1, min_value=1)
 
         print("\nRunning comparative benchmark...")
         print(f"Vector size: {vector_size}, Iterations: {iterations}, Threads: {thread_count}")
@@ -346,9 +350,11 @@ class InterviewDemoConsole:
         """Run task 3 benchmark"""
         if not self.check_cpp_module():
             return
-        
-        element_count = self.get_int_input("Number of elements", 100000)
-        lookup_iterations = self.get_int_input("Number of lookup iterations", 1000000)
+
+        element_count = self.get_int_input("Number of elements", 100000, min_value=1)
+        lookup_iterations = self.get_int_input(
+            "Number of lookup iterations", 1000000, min_value=1
+        )
 
         print("\nRunning benchmark...")
         print(f"Elements: {element_count}, Lookup iterations: {lookup_iterations}")
