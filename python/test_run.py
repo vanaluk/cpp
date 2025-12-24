@@ -5,7 +5,7 @@ Tests for run.py - Task 2.2, 2.3, 2.4 integration tests
 import sys
 import os
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import json
 
 # Add path to modules
@@ -486,16 +486,10 @@ class TestRunAllTasks:
         console = InterviewDemoConsole()
         
         with patch.object(console, 'check_cpp_module', return_value=False):
-            import io
-            from contextlib import redirect_stdout
-            f = io.StringIO()
-            with redirect_stdout(f):
-                console.run_all_tasks()
-            output = f.getvalue()
-            
-            # Should return early without crashing
-            # May show warning about module
-    
+            # Should return early without crashing when module is missing
+            # No exception should be raised
+            console.run_all_tasks()
+
     @pytest.mark.skipif(not CPP_MODULE_AVAILABLE, reason="C++ module not available")
     def test_run_all_tasks_calls_all_demos_and_benchmarks(self):
         """TC-E2E-01: Run all tasks completes successfully"""

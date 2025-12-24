@@ -67,8 +67,9 @@ try:
     
     if build_dir not in sys.path:
         sys.path.insert(0, build_dir)
-    
-    import cpp_interview_bindings as cpp
+
+    import cpp_interview_bindings as cpp  # type: ignore[import-not-found]
+
     CPP_MODULE_AVAILABLE = True
 except ImportError as e:
     # Graceful degradation: continue in stub mode
