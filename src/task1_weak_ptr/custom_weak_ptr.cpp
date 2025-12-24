@@ -8,8 +8,9 @@
 void demonstrate_weak_ptr_lock() {
 	std::cout << "=== CustomWeakPtr::lock() Demonstration ===\n\n";
 
-	// Create shared_ptr
-	CustomSharedPtr<int> shared(new int(42));
+	// Create shared_ptr with demo value
+	constexpr int kDemoValue= 10;
+	CustomSharedPtr<int> shared(new int(kDemoValue));
 	std::cout << "1. Created CustomSharedPtr, use_count = " << shared.use_count() << "\n";
 
 	// Create weak_ptr

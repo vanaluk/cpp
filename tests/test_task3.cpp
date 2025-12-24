@@ -113,14 +113,18 @@ constexpr int MAP_LOOKUPS= 100000;
 constexpr int VEC_ELEMENTS= 1000;
 constexpr int VEC_LOOKUPS= 1000;
 
+// Conversion constants
+constexpr double kNsToMs= 1'000'000.0; // Nanoseconds to milliseconds
+constexpr double kPercentBase= 100.0;
+
 void check_performance(const char* operation, long long actual_ns, long long threshold_ns) {
 	bool passed= actual_ns <= threshold_ns;
 	if(!passed) {
-		double exceeded_by= (static_cast<double>(actual_ns) / static_cast<double>(threshold_ns) - 1.0) * 100.0;
-		BOOST_CHECK_MESSAGE(passed, operation << " exceeded threshold: " << static_cast<double>(actual_ns) / 1'000'000.0 << "ms actual vs " << static_cast<double>(threshold_ns) / 1'000'000.0 << "ms threshold " << "(+" << exceeded_by << "% over limit)");
+		double exceeded_by= (static_cast<double>(actual_ns) / static_cast<double>(threshold_ns) - 1.0) * kPercentBase;
+		BOOST_CHECK_MESSAGE(passed, operation << " exceeded threshold: " << static_cast<double>(actual_ns) / kNsToMs << "ms actual vs " << static_cast<double>(threshold_ns) / kNsToMs << "ms threshold " << "(+" << exceeded_by << "% over limit)");
 	} else {
-		double margin= (1.0 - static_cast<double>(actual_ns) / static_cast<double>(threshold_ns)) * 100.0;
-		BOOST_CHECK_MESSAGE(passed, operation << ": " << static_cast<double>(actual_ns) / 1'000'000.0 << "ms (" << margin << "% under threshold)");
+		double margin= (1.0 - static_cast<double>(actual_ns) / static_cast<double>(threshold_ns)) * kPercentBase;
+		BOOST_CHECK_MESSAGE(passed, operation << ": " << static_cast<double>(actual_ns) / kNsToMs << "ms (" << margin << "% under threshold)");
 	}
 }
 } // namespace

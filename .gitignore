@@ -1,5 +1,6 @@
 # Build directories
 build/
+build-local/
 cmake-build-*/
 *.o
 *.a
@@ -45,3 +46,4 @@ task*
 test_report*
 docs/
 cpp.code-workspace
+compile_commands.json

@@ -263,14 +263,19 @@ constexpr long long REMOVE_IF_THRESHOLD_NS= 10'000'000; // 10ms
 constexpr long long COPY_THRESHOLD_NS= 10'000'000; // 10ms
 constexpr long long PARTITION_THRESHOLD_NS= 10'000'000; // 10ms
 
+// Conversion constants
+constexpr double kNsToMs= 1'000'000.0; // Nanoseconds to milliseconds
+constexpr double kPercentBase= 100.0;
+constexpr int kSpeedupFactor= 3; // O(n) should be at least 3x faster than O(n²)
+
 void check_performance(const char* operation, long long actual_ns, long long threshold_ns) {
 	bool passed= actual_ns <= threshold_ns;
 	if(!passed) {
-		double exceeded_by= (static_cast<double>(actual_ns) / static_cast<double>(threshold_ns) - 1.0) * 100.0;
-		BOOST_CHECK_MESSAGE(passed, operation << " exceeded threshold: " << static_cast<double>(actual_ns) / 1'000'000.0 << "ms actual vs " << static_cast<double>(threshold_ns) / 1'000'000.0 << "ms threshold " << "(+" << exceeded_by << "% over limit)");
+		double exceeded_by= (static_cast<double>(actual_ns) / static_cast<double>(threshold_ns) - 1.0) * kPercentBase;
+		BOOST_CHECK_MESSAGE(passed, operation << " exceeded threshold: " << static_cast<double>(actual_ns) / kNsToMs << "ms actual vs " << static_cast<double>(threshold_ns) / kNsToMs << "ms threshold " << "(+" << exceeded_by << "% over limit)");
 	} else {
-		double margin= (1.0 - static_cast<double>(actual_ns) / static_cast<double>(threshold_ns)) * 100.0;
-		BOOST_CHECK_MESSAGE(passed, operation << ": " << static_cast<double>(actual_ns) / 1'000'000.0 << "ms (" << margin << "% under threshold)");
+		double margin= (1.0 - static_cast<double>(actual_ns) / static_cast<double>(threshold_ns)) * kPercentBase;
+		BOOST_CHECK_MESSAGE(passed, operation << ": " << static_cast<double>(actual_ns) / kNsToMs << "ms (" << margin << "% under threshold)");
 	}
 }
 } // namespace
@@ -314,10 +319,10 @@ BOOST_AUTO_TEST_CASE(test_on_methods_faster_than_on2) {
 
 	// O(n) method should be at least 3x faster than O(n²) on 1000 elements
 	// (theoretically n/2 = 500x, but CI variance requires conservative threshold)
-	BOOST_CHECK_MESSAGE(naive_time > copy_time * 3,
-		"O(n) copy method should be at least 3x faster than O(n²) naive method: "
-			<< "naive=" << naive_time / 1'000'000.0 << "ms, "
-			<< "copy=" << copy_time / 1'000'000.0 << "ms");
+	BOOST_CHECK_MESSAGE(naive_time > copy_time * kSpeedupFactor,
+		"O(n) copy method should be at least " << kSpeedupFactor << "x faster than O(n²) naive method: "
+			<< "naive=" << static_cast<double>(naive_time) / kNsToMs << "ms, "
+			<< "copy=" << static_cast<double>(copy_time) / kNsToMs << "ms");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
