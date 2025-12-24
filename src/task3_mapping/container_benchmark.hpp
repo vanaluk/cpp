@@ -1,11 +1,6 @@
 #pragma once
 
-#include <map>
-#include <unordered_map>
-#include <vector>
 #include <string>
-#include <chrono>
-#include <functional>
 
 /**
  * Benchmarks for different containers for mapping unique integer to string

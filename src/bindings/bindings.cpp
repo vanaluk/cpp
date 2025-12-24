@@ -35,45 +35,20 @@ PYBIND11_MODULE(cpp_interview_bindings, m) {
 		"Method using partition");
 
 	// Task 2: Benchmark wrapper functions
-	m.def("benchmark_naive_erase", 
-		[](size_t vector_size, int iterations, int thread_count = 1) -> long long {
-			return benchmark_vector_erase(erase_every_second_naive<int>, "naive", 
-				vector_size, iterations, thread_count);
-		},
-		"Benchmark for naive erase method",
-		py::arg("vector_size"), py::arg("iterations"), py::arg("thread_count") = 1);
+	m.def("benchmark_naive_erase", [](size_t vector_size, int iterations, int thread_count= 1) -> long long { return benchmark_vector_erase(erase_every_second_naive<int>, "naive",
+																												  vector_size, iterations, thread_count); }, "Benchmark for naive erase method", py::arg("vector_size"), py::arg("iterations"), py::arg("thread_count")= 1);
 
-	m.def("benchmark_remove_if_erase", 
-		[](size_t vector_size, int iterations, int thread_count = 1) -> long long {
-			return benchmark_vector_erase(erase_every_second_remove_if<int>, "remove_if", 
-				vector_size, iterations, thread_count);
-		},
-		"Benchmark for remove_if erase method",
-		py::arg("vector_size"), py::arg("iterations"), py::arg("thread_count") = 1);
+	m.def("benchmark_remove_if_erase", [](size_t vector_size, int iterations, int thread_count= 1) -> long long { return benchmark_vector_erase(erase_every_second_remove_if<int>, "remove_if",
+																													  vector_size, iterations, thread_count); }, "Benchmark for remove_if erase method", py::arg("vector_size"), py::arg("iterations"), py::arg("thread_count")= 1);
 
-	m.def("benchmark_iterators_erase", 
-		[](size_t vector_size, int iterations, int thread_count = 1) -> long long {
-			return benchmark_vector_erase(erase_every_second_iterators<int>, "iterators", 
-				vector_size, iterations, thread_count);
-		},
-		"Benchmark for iterators erase method",
-		py::arg("vector_size"), py::arg("iterations"), py::arg("thread_count") = 1);
+	m.def("benchmark_iterators_erase", [](size_t vector_size, int iterations, int thread_count= 1) -> long long { return benchmark_vector_erase(erase_every_second_iterators<int>, "iterators",
+																													  vector_size, iterations, thread_count); }, "Benchmark for iterators erase method", py::arg("vector_size"), py::arg("iterations"), py::arg("thread_count")= 1);
 
-	m.def("benchmark_copy_erase", 
-		[](size_t vector_size, int iterations, int thread_count = 1) -> long long {
-			return benchmark_vector_erase(erase_every_second_copy<int>, "copy", 
-				vector_size, iterations, thread_count);
-		},
-		"Benchmark for copy erase method",
-		py::arg("vector_size"), py::arg("iterations"), py::arg("thread_count") = 1);
+	m.def("benchmark_copy_erase", [](size_t vector_size, int iterations, int thread_count= 1) -> long long { return benchmark_vector_erase(erase_every_second_copy<int>, "copy",
+																												 vector_size, iterations, thread_count); }, "Benchmark for copy erase method", py::arg("vector_size"), py::arg("iterations"), py::arg("thread_count")= 1);
 
-	m.def("benchmark_partition_erase", 
-		[](size_t vector_size, int iterations, int thread_count = 1) -> long long {
-			return benchmark_vector_erase(erase_every_second_partition<int>, "partition", 
-				vector_size, iterations, thread_count);
-		},
-		"Benchmark for partition erase method",
-		py::arg("vector_size"), py::arg("iterations"), py::arg("thread_count") = 1);
+	m.def("benchmark_partition_erase", [](size_t vector_size, int iterations, int thread_count= 1) -> long long { return benchmark_vector_erase(erase_every_second_partition<int>, "partition",
+																													  vector_size, iterations, thread_count); }, "Benchmark for partition erase method", py::arg("vector_size"), py::arg("iterations"), py::arg("thread_count")= 1);
 
 	// Task 3: Mapping number to string
 	// BenchmarkResult struct binding (must be before functions that return it)
@@ -84,7 +59,7 @@ PYBIND11_MODULE(cpp_interview_bindings, m) {
 		.def_readonly("erase_time_ns", &BenchmarkResult::erase_time_ns)
 		.def_readonly("memory_usage_bytes", &BenchmarkResult::memory_usage_bytes)
 		.def("__repr__", [](const BenchmarkResult& r) {
-			return "<BenchmarkResult(container='" + r.container_name + 
+			return "<BenchmarkResult(container='" + r.container_name +
 				"', insert=" + std::to_string(r.insert_time_ns) + "ns, " +
 				"lookup=" + std::to_string(r.lookup_time_ns) + "ns, " +
 				"erase=" + std::to_string(r.erase_time_ns) + "ns, " +
