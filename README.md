@@ -334,18 +334,53 @@ ln -sf build/compile_commands.json compile_commands.json
 
 ## 📈 Profiling with perf
 
+### Setup (required once)
+
+By default, Linux restricts access to performance counters. To enable `perf`:
+
+```bash
+# Temporary (until reboot)
+sudo sysctl kernel.perf_event_paranoid=-1
+
+# Permanent (add to /etc/sysctl.conf)
+echo 'kernel.perf_event_paranoid = -1' | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+
+# Or run perf with sudo
+sudo perf record ./build/CppInterviewDemo
+```
+
+### Recording profile
+
 ```bash
 # Record profile (Release build)
 perf record ./build/CppInterviewDemo
 
-# Record profile (Debug build)
+# Record profile (Debug build - better symbol resolution)
 perf record ./build-debug/CppInterviewDemo
 
-# Analyze
+# Record with call graph (for flame graphs)
+perf record -g ./build/CppInterviewDemo
+```
+
+### Analyzing data
+
+```bash
+# Interactive report (navigate with arrows, Enter to drill down)
 perf report
 
-# Or via Docker
-docker-compose --profile release run --rm app perf record ./build/CppInterviewDemo
+# Text report (non-interactive)
+perf report --stdio
+
+# Show call graph
+perf report --call-graph=graph
+
+# Annotate source code (requires Debug build with -g)
+perf annotate <function_name>
+
+# Quick statistics without recording
+perf stat ./build/CppInterviewDemo
+
 ```
 
 ---
