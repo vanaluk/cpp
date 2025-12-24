@@ -1,0 +1,62 @@
+=======================================================================================================================================
+Date/Time            Build    Task                   Method                       Time            Ops/sec      Threads 
+=======================================================================================================================================
+2025-12-24 10:03:54  Release  Mapping benchmark      std::vector<pair>            201.34 s        4.97K        1       
+2025-12-24 10:03:54  Release  Mapping benchmark      std::unordered_map           69.34 ms        14.42M       1       
+2025-12-24 10:03:54  Release  Mapping benchmark      std::map                     371.84 ms       2.69M        1       
+2025-12-24 10:00:16  Release  Vector erase           partition_erase              59.96 ms        1.67K        2       
+2025-12-24 10:00:16  Release  Vector erase           copy_erase                   57.57 ms        1.74K        2       
+2025-12-24 10:00:16  Release  Vector erase           iterators_erase              6.82 s          14.67        2       
+2025-12-24 10:00:16  Release  Vector erase           remove_if_erase              73.00 ms        1.37K        2       
+2025-12-24 10:00:16  Release  Vector erase           naive_erase                  6.49 s          15.41        2       
+2025-12-24 09:59:53  Release  Vector erase           partition_erase              86.65 ms        1.15K        1       
+2025-12-24 09:59:53  Release  Vector erase           copy_erase                   113.62 ms       880.13       1       
+2025-12-24 09:59:53  Release  Vector erase           iterators_erase              12.62 s         7.92         1       
+2025-12-24 09:59:53  Release  Vector erase           remove_if_erase              155.66 ms       642.42       1       
+2025-12-24 09:59:53  Release  Vector erase           naive_erase                  12.55 s         7.97         1       
+2025-12-24 09:59:22  Release  weak_ptr::lock()       CustomWeakPtr::lock()        35.91 ms        27.85M       2       
+2025-12-24 09:59:15  Release  weak_ptr::lock()       CustomWeakPtr::lock()        63.77 ms        15.68M       1       
+2025-12-24 09:57:22  Release  Mapping benchmark      std::vector<pair>            3.01 ms         331.83M      1       
+2025-12-24 09:57:22  Release  Mapping benchmark      std::unordered_map           3.19 ms         313.35M      1       
+2025-12-24 09:57:22  Release  Mapping benchmark      std::map                     3.09 ms         323.17M      1       
+2025-12-24 09:57:15  Release  Vector erase           partition_erase              1.54 ms         64.81K       2       
+2025-12-24 09:57:15  Release  Vector erase           copy_erase                   2.33 ms         42.84K       2       
+2025-12-24 09:57:15  Release  Vector erase           iterators_erase              6.32 s          15.83        2       
+2025-12-24 09:57:15  Release  Vector erase           remove_if_erase              2.01 ms         49.65K       2       
+2025-12-24 09:57:15  Release  Vector erase           naive_erase                  6.10 s          16.39        2       
+2025-12-24 09:56:52  Release  weak_ptr::lock()       CustomWeakPtr::lock()        21.03 ms        47.56M       2       
+2025-12-24 09:56:27  Release  Vector erase           partition_erase              2.95 ms         33.88K       1       
+2025-12-24 09:56:27  Release  Vector erase           copy_erase                   4.76 ms         21.02K       1       
+2025-12-24 09:56:27  Release  Vector erase           iterators_erase              12.24 s         8.17         1       
+2025-12-24 09:56:27  Release  Vector erase           remove_if_erase              3.74 ms         26.77K       1       
+2025-12-24 09:56:27  Release  Vector erase           naive_erase                  12.26 s         8.15         1       
+2025-12-24 09:55:52  Release  weak_ptr::lock()       CustomWeakPtr::lock()        39.31 ms        25.44M       1       
+---------------------------------------------------------------------------------------------------------------------------------------
+Total records: 30
+
+⚡ RELEASE vs DEBUG COMPARISON
+========================================================================================================================
+
+📌 Task 1
+--------------------------------------------------------------------------------------------------------------
+Method                              Release Time       Debug Time         Speedup      Release Ops/s  
+--------------------------------------------------------------------------------------------------------------
+CustomWeakPtr::lock()               48.49 ms           71.96 ms           🚀 1.48x      20.62M         
+
+📌 Task 2
+--------------------------------------------------------------------------------------------------------------
+Method                              Release Time       Debug Time         Speedup      Release Ops/s  
+--------------------------------------------------------------------------------------------------------------
+copy_erase                          4.69 ms            107.89 ms          🚀 22.99x     21.31K         
+iterators_erase                     12.22 s            12.66 s            🚀 1.04x      8.19           
+naive_erase                         11.91 s            12.74 s            🚀 1.07x      8.40           
+partition_erase                     2.88 ms            81.74 ms           🚀 28.35x     34.69K         
+remove_if_erase                     3.46 ms            141.02 ms          🚀 40.72x     28.88K         
+
+📌 Task 3
+--------------------------------------------------------------------------------------------------------------
+Method                              Release Time       Debug Time         Speedup      Release Ops/s  
+--------------------------------------------------------------------------------------------------------------
+std::map                            3.33 ms            474.70 ms          🚀 142.66x    300.52M        
+std::unordered_map                  3.21 ms            98.47 ms           🚀 30.65x     311.22M        
+std::vector<pair>                   3.32 ms            213.68 s           🚀 64402.99x  301.39M    

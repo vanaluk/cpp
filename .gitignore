@@ -1,5 +1,6 @@
 # Build directories
 build/
+build-local/
 cmake-build-*/
 *.o
 *.a
@@ -41,6 +42,9 @@ Thumbs.db
 
 promt.txt
 status.md
-task.md
+task*
+test_report*
 docs/
 cpp.code-workspace
+compile_commands.json
+.env

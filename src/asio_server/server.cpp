@@ -1,13 +1,14 @@
 #include <boost/asio.hpp>
 #include <iostream>
 #include <string>
-#include <thread>
 #include <vector>
 #include <sstream>
-#include <chrono>
 #include <cstdlib>
 #include <map>
-#include <regex>
+#include "task1_weak_ptr/custom_weak_ptr.hpp"
+#include "task2_vector_erase/vector_erase.hpp"
+#include "task3_mapping/container_benchmark.hpp"
+#include "db/postgres_client.hpp"
 
 using boost::asio::ip::tcp;
 
@@ -106,15 +107,51 @@ private:
 			return default_value;
 		}
 
+		// Get positive integer parameter (returns 0 for invalid/negative values)
+		size_t get_param_size(const std::map<std::string, std::string>& params,
+			const std::string& key, size_t default_value, size_t max_value= 100000000) {
+			auto it= params.find(key);
+			if(it != params.end()) {
+				try {
+					long long val= std::stoll(it->second);
+					if(val <= 0) {
+						return 0; // Invalid: non-positive
+					}
+					if(static_cast<unsigned long long>(val) > max_value) {
+						return 0; // Invalid: exceeds max
+					}
+					return static_cast<size_t>(val);
+				} catch(...) {
+					return 0; // Invalid: parse error
+				}
+			}
+			return default_value;
+		}
+
 		std::string json_response(int code, const std::string& body) {
 			std::stringstream ss;
-			ss << "HTTP/1.1 " << code << " OK\r\n";
+			std::string status_text= (code == 200) ? "OK" : (code == 400) ? "Bad Request"
+																		  : "Error";
+			ss << "HTTP/1.1 " << code << " " << status_text << "\r\n";
 			ss << "Content-Type: application/json\r\n";
 			ss << "Access-Control-Allow-Origin: *\r\n";
 			ss << "Content-Length: " << body.length() << "\r\n";
 			ss << "\r\n";
 			ss << body;
 			return ss.str();
+		}
+
+		std::string json_error(int code, const std::string& message) {
+			std::stringstream json;
+			json << "{\"error\": \"" << message << "\", \"status\": \"error\"}";
+			return json_response(code, json.str());
+		}
+
+		double safe_ops_per_sec(double operations, long long duration_ns) {
+			if(duration_ns <= 0) {
+				return 0.0;
+			}
+			return operations / (static_cast<double>(duration_ns) / 1e9);
 		}
 
 		std::string process_request(const std::string& request) {
@@ -133,20 +170,25 @@ private:
 
 			// GET /benchmark/task1
 			if(url.find("/benchmark/task1") == 0) {
-				int iterations= get_param_int(params, "iterations", 1000000);
-				int threads= get_param_int(params, "threads", 1);
+				size_t iterations= get_param_size(params, "iterations", 1000000, 100000000);
+				size_t threads= get_param_size(params, "threads", 1, 64);
 
-				auto start= std::chrono::high_resolution_clock::now();
-				// TODO: Call real weak_ptr::lock() benchmark here
-				// Simulation of work
-				volatile int sum= 0;
-				for(int i= 0; i < iterations / 1000; ++i) {
-					sum+= i;
+				if(iterations == 0) {
+					return json_error(400, "Invalid 'iterations' parameter: must be positive integer <= 100000000");
 				}
-				auto end= std::chrono::high_resolution_clock::now();
-				auto duration= std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+				if(threads == 0) {
+					return json_error(400, "Invalid 'threads' parameter: must be positive integer <= 64");
+				}
 
-				double ops_per_sec= static_cast<double>(iterations) / (duration / 1e9);
+				// Call real C++ benchmark function
+				long long duration= benchmark_weak_ptr_lock(static_cast<int>(iterations), static_cast<int>(threads));
+				double ops_per_sec= safe_ops_per_sec(static_cast<double>(iterations), duration);
+
+				// Save to database
+				bool saved= get_db_client().save_result(
+					1, "weak_ptr::lock()", "CustomWeakPtr::lock()",
+					duration, ops_per_sec, static_cast<int>(threads),
+					get_build_type());
 
 				std::stringstream json;
 				json << "{\n";
@@ -157,6 +199,7 @@ private:
 				json << "  \"threads\": " << threads << ",\n";
 				json << "  \"execution_time_ns\": " << duration << ",\n";
 				json << "  \"operations_per_second\": " << std::fixed << ops_per_sec << ",\n";
+				json << "  \"saved_to_db\": " << (saved ? "true" : "false") << ",\n";
 				json << "  \"status\": \"success\"\n";
 				json << "}";
 
@@ -165,17 +208,38 @@ private:
 
 			// GET /benchmark/task2
 			if(url.find("/benchmark/task2") == 0) {
-				int size= get_param_int(params, "size", 100000);
-				int iterations= get_param_int(params, "iterations", 100);
+				size_t size= get_param_size(params, "size", 100000, 10000000);
+				size_t iterations= get_param_size(params, "iterations", 100, 10000);
+				size_t threads= get_param_size(params, "threads", 1, 64);
 
-				// TODO: Call real benchmarks for each method here
-				// Simulate results
+				if(size == 0) {
+					return json_error(400, "Invalid 'size' parameter: must be positive integer <= 10000000");
+				}
+				if(iterations == 0) {
+					return json_error(400, "Invalid 'iterations' parameter: must be positive integer <= 10000");
+				}
+				if(threads == 0) {
+					return json_error(400, "Invalid 'threads' parameter: must be positive integer <= 64");
+				}
+
+				// Call real benchmarks for each method
 				std::vector<std::pair<std::string, long long>> methods= {
-					{"naive_erase", 45670000},
-					{"remove_if_erase", 1230000},
-					{"iterators", 43210000},
-					{"copy_to_new", 980000},
-					{"partition", 890000}};
+					{"naive_erase", benchmark_vector_erase(erase_every_second_naive<int>, "naive", size, static_cast<int>(iterations), static_cast<int>(threads))},
+					{"remove_if_erase", benchmark_vector_erase(erase_every_second_remove_if<int>, "remove_if", size, static_cast<int>(iterations), static_cast<int>(threads))},
+					{"iterators_erase", benchmark_vector_erase(erase_every_second_iterators<int>, "iterators", size, static_cast<int>(iterations), static_cast<int>(threads))},
+					{"copy_erase", benchmark_vector_erase(erase_every_second_copy<int>, "copy", size, static_cast<int>(iterations), static_cast<int>(threads))},
+					{"partition_erase", benchmark_vector_erase(erase_every_second_partition<int>, "partition", size, static_cast<int>(iterations), static_cast<int>(threads))}};
+
+				// Save each method result to database
+				std::string build_type= get_build_type();
+				int saved_count= 0;
+				for(const auto& m: methods) {
+					double ops= safe_ops_per_sec(static_cast<double>(iterations), m.second);
+					if(get_db_client().save_result(2, "Vector erase", m.first, m.second, ops,
+						   static_cast<int>(threads), build_type)) {
+						++saved_count;
+					}
+				}
 
 				std::stringstream json;
 				json << "{\n";
@@ -183,19 +247,21 @@ private:
 				json << "  \"task_name\": \"Vector erase\",\n";
 				json << "  \"vector_size\": " << size << ",\n";
 				json << "  \"iterations\": " << iterations << ",\n";
+				json << "  \"threads\": " << threads << ",\n";
 				json << "  \"methods\": [\n";
 
 				for(size_t i= 0; i < methods.size(); ++i) {
 					json << "    {\"name\": \"" << methods[i].first << "\", ";
 					json << "\"time_ns\": " << methods[i].second << ", ";
 					json << "\"ops_per_sec\": " << std::fixed
-						 << (static_cast<double>(iterations) / (methods[i].second / 1e9)) << "}";
+						 << safe_ops_per_sec(static_cast<double>(iterations), methods[i].second) << "}";
 					if(i < methods.size() - 1)
 						json << ",";
 					json << "\n";
 				}
 
 				json << "  ],\n";
+				json << "  \"saved_to_db\": " << saved_count << ",\n";
 				json << "  \"status\": \"success\"\n";
 				json << "}";
 
@@ -204,14 +270,57 @@ private:
 
 			// GET /benchmark/task3
 			if(url.find("/benchmark/task3") == 0) {
-				int size= get_param_int(params, "size", 100000);
-				int lookups= get_param_int(params, "lookups", 1000000);
+				size_t size= get_param_size(params, "size", 100000, 10000000);
+				size_t lookups= get_param_size(params, "lookups", 1000000, 100000000);
 
-				// TODO: Call real benchmarks for each container here
-				std::vector<std::tuple<std::string, long long, std::string>> containers= {
-					{"std::map", 15000000, "O(log n)"},
-					{"std::unordered_map", 800000, "O(1) average"},
-					{"std::vector<pair>", 95000000, "O(n)"}};
+				if(size == 0) {
+					return json_error(400, "Invalid 'size' parameter: must be positive integer <= 10000000");
+				}
+				if(lookups == 0) {
+					return json_error(400, "Invalid 'lookups' parameter: must be positive integer <= 100000000");
+				}
+
+				// Call real benchmarks for each container
+				BenchmarkResult map_result= benchmark_map(static_cast<int>(size), static_cast<int>(lookups));
+				BenchmarkResult umap_result= benchmark_unordered_map(static_cast<int>(size), static_cast<int>(lookups));
+				BenchmarkResult vec_result= benchmark_vector(static_cast<int>(size), static_cast<int>(lookups));
+
+				// Save each container result to database
+				std::string build_type= get_build_type();
+				int saved_count= 0;
+				auto save_container_result= [&](const BenchmarkResult& r) {
+					double ops= safe_ops_per_sec(static_cast<double>(lookups), r.lookup_time_ns);
+					if(get_db_client().save_result(3, "Mapping benchmark", r.container_name,
+						   r.lookup_time_ns, ops, 1, build_type)) {
+						++saved_count;
+					}
+				};
+				save_container_result(map_result);
+				save_container_result(umap_result);
+				save_container_result(vec_result);
+
+				// Helper to get complexity string
+				auto get_complexity= [](const std::string& name) -> std::string {
+					if(name == "std::map")
+						return "O(log n)";
+					if(name == "std::unordered_map")
+						return "O(1) average";
+					return "O(n)";
+				};
+
+				// Determine recommendation based on actual results (find fastest lookup among all containers)
+				std::string recommendation;
+				if(umap_result.lookup_time_ns <= map_result.lookup_time_ns &&
+					umap_result.lookup_time_ns <= vec_result.lookup_time_ns) {
+					recommendation= "std::unordered_map for best lookup performance";
+				} else if(map_result.lookup_time_ns <= umap_result.lookup_time_ns &&
+					map_result.lookup_time_ns <= vec_result.lookup_time_ns) {
+					recommendation= "std::map for this dataset size";
+				} else {
+					recommendation= "std::vector<pair> for this dataset size";
+				}
+
+				std::vector<BenchmarkResult> results= {map_result, umap_result, vec_result};
 
 				std::stringstream json;
 				json << "{\n";
@@ -221,19 +330,24 @@ private:
 				json << "  \"lookups\": " << lookups << ",\n";
 				json << "  \"containers\": [\n";
 
-				for(size_t i= 0; i < containers.size(); ++i) {
-					json << "    {\"name\": \"" << std::get<0>(containers[i]) << "\", ";
-					json << "\"time_ns\": " << std::get<1>(containers[i]) << ", ";
-					json << "\"complexity\": \"" << std::get<2>(containers[i]) << "\", ";
+				for(size_t i= 0; i < results.size(); ++i) {
+					const auto& result= results[i];
+					json << "    {\"name\": \"" << result.container_name << "\", ";
+					json << "\"insert_ns\": " << result.insert_time_ns << ", ";
+					json << "\"lookup_ns\": " << result.lookup_time_ns << ", ";
+					json << "\"erase_ns\": " << result.erase_time_ns << ", ";
+					json << "\"memory_bytes\": " << result.memory_usage_bytes << ", ";
+					json << "\"complexity\": \"" << get_complexity(result.container_name) << "\", ";
 					json << "\"ops_per_sec\": " << std::fixed
-						 << (static_cast<double>(lookups) / (std::get<1>(containers[i]) / 1e9)) << "}";
-					if(i < containers.size() - 1)
+						 << safe_ops_per_sec(static_cast<double>(lookups), result.lookup_time_ns) << "}";
+					if(i < results.size() - 1)
 						json << ",";
 					json << "\n";
 				}
 
 				json << "  ],\n";
-				json << "  \"recommendation\": \"std::unordered_map for best performance\",\n";
+				json << "  \"recommendation\": \"" << recommendation << "\",\n";
+				json << "  \"saved_to_db\": " << saved_count << ",\n";
 				json << "  \"status\": \"success\"\n";
 				json << "}";
 
@@ -242,15 +356,11 @@ private:
 
 			// GET /results
 			if(url.find("/results") == 0) {
-				// TODO: Query PostgreSQL for results here
-				std::stringstream json;
-				json << "{\n";
-				json << "  \"results\": [],\n";
-				json << "  \"total\": 0,\n";
-				json << "  \"note\": \"Connect to PostgreSQL to see real results\"\n";
-				json << "}";
+				int limit= get_param_int(params, "limit", 100);
+				int task= get_param_int(params, "task", 0);
 
-				return json_response(200, json.str());
+				std::string results_json= get_db_client().get_results_json(limit, task);
+				return json_response(200, results_json);
 			}
 
 			// 404 Not Found

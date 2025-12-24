@@ -7,41 +7,71 @@
 ```bash
 cd cpp
 
-# Run script (automatically detects Docker)
+# Build Release (default, Ultra Low Latency optimizations)
+docker-compose --profile release build app
+# Or via install script (builds Release by default)
 ./install.sh
+
+# Build Debug (for development and debugging)
+docker-compose --profile debug build app-debug
+# Or via install script
+./install.sh --local
+
 ```
+
+> **Note:** Docker supports both **Release** (ULL optimizations) and **Debug** modes via separate services.
 
 ### 1.2 Start Interactive Console
 
 ```bash
-# Start PostgreSQL + interactive console (recommended)
-docker-compose run --rm app
+# Release mode (default, ULL optimizations)
+docker-compose --profile release run --rm --service-ports app
+
+# Debug mode (with debug symbols, no optimizations)
+docker-compose --profile debug run --rm --service-ports app-debug
 
 # Alternative: Start in background, then connect
 docker-compose up -d
 docker-compose exec app python3 python/run.py
 ```
 
+> **Note:** Use `--service-ports` flag to enable port mapping for menu option `[6] Start Boost.Asio server`.
+
 ### 1.3 Run Specific Commands
 
 ```bash
 # Run all benchmarks automatically
-docker-compose run --rm app python3 python/run.py --autorun
+docker-compose --profile release run --rm app python3 python/run.py --autorun
 
 # View results
-docker-compose run --rm app python3 python/view_results.py
+docker-compose --profile release run --rm app python3 python/view_results.py
 
 # View statistics
-docker-compose run --rm app python3 python/view_results.py --stats
+docker-compose --profile release run --rm app python3 python/view_results.py --stats
 
 # Export results
-docker-compose run --rm app python3 python/view_results.py --export csv
+docker-compose --profile release run --rm app python3 python/view_results.py --export csv
 
 # Run C++ binary directly
-docker-compose run --rm app ./build/CppInterviewDemo
+docker-compose --profile release run --rm app ./build/CppInterviewDemo
 ```
 
-### 1.4 Stop
+### 1.4 Run Unit Tests
+
+```bash
+# Run all unit tests inside Docker
+docker-compose --profile release run --rm app bash -c "cd build && ctest --output-on-failure"
+
+# Run specific test suite
+docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task1 --verbose"
+docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task2 --verbose"
+docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task3 --verbose"
+
+# Run tests with detailed output
+docker-compose --profile release run --rm app bash -c "cd build && ctest -V"
+```
+
+### 1.5 Stop
 
 ```bash
 # Stop all containers
@@ -75,15 +105,35 @@ cd cpp
 # Option 1: Via script (force local build, no Docker)
 ./install.sh --local
 
-# Option 2: Manually
+# Option 2: Manually - Release build (Ultra Low Latency optimizations)
 mkdir -p build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build . -j$(nproc)
+cd ..
+
+# Option 3: Debug build (for development and debugging)
+mkdir -p build-debug && cd build-debug
+cmake .. -DCMAKE_BUILD_TYPE=Debug
 cmake --build . -j$(nproc)
 cd ..
 ```
 
 > **Note:** Use `--local` flag to guarantee local build even if Docker is installed.
 > Use `./install.sh --help` to see all available options.
+
+#### Build Modes Comparison
+
+| Mode | Command | Use Case |
+|------|---------|----------|
+| **Release** | `cmake .. -DCMAKE_BUILD_TYPE=Release` | Production, benchmarks, ULL optimizations |
+| **Debug** | `cmake .. -DCMAKE_BUILD_TYPE=Debug` | Development, debugging with symbols |
+
+**Release mode** enables Ultra Low Latency optimizations:
+- `-O3 -march=native -mtune=native` — CPU-specific optimizations
+- `-flto` — Link-Time Optimization
+- `-fno-exceptions -fno-rtti` — Disable C++ overhead
+- `-ffast-math -funroll-loops` — Aggressive optimizations
+- See `CMakeLists.txt` for full list
 
 ### 2.3 Configure PostgreSQL
 
@@ -139,7 +189,32 @@ python3 python/run.py
 # [6] - Start HTTP server
 ```
 
-### 2.5 View Results
+### 2.5 Run Unit Tests
+
+```bash
+cd build
+
+# Run all tests
+ctest --output-on-failure
+
+# Run specific test suite
+ctest -R Task1 --verbose    # Task 1: CustomSharedPtr, CustomWeakPtr
+ctest -R Task2 --verbose    # Task 2: Vector erase methods
+ctest -R Task3 --verbose    # Task 3: Container benchmarks
+
+# Run all tests with detailed output
+ctest -V
+
+# Run tests and show test names
+ctest -N    # List all tests without running
+```
+
+**Test coverage:**
+- **Task 1:** 8 tests (CustomSharedPtr, CustomWeakPtr, lock(), multi-threading)
+- **Task 2:** 25 tests (5 erase methods × 5 scenarios each)
+- **Task 3:** 8 tests (BenchmarkResult validation, positive values, scaling)
+
+### 2.6 View Results
 
 ```bash
 # All results
@@ -148,17 +223,19 @@ python3 python/view_results.py
 # Task 1 only
 python3 python/view_results.py --task 1
 
-# Task 2 only
-python3 python/view_results.py --task 2
-
-# Task 3 only
-python3 python/view_results.py --task 3
+# Filter by build type
+python3 python/view_results.py --build Release
+python3 python/view_results.py --build Debug
 
 # Statistics by methods
 python3 python/view_results.py --stats
 
-# Statistics for task 2 only
-python3 python/view_results.py --stats --task 2
+# Statistics for Release builds only
+python3 python/view_results.py --stats --build Release
+
+# Compare Release vs Debug performance (shows speedup)
+python3 python/view_results.py --compare
+python3 python/view_results.py --compare --task 2
 
 # Export to CSV
 python3 python/view_results.py --export csv
@@ -183,8 +260,11 @@ python3 python/view_results.py --limit 10
 # Via Docker (recommended)
 docker-compose --profile server up
 
-# Or locally
+# Or locally (Release build)
 ./build/asio_server 8080
+
+# Or locally (Debug build)
+./build-debug/asio_server 8080
 ```
 
 ### 3.2 Available Endpoints
@@ -304,14 +384,54 @@ curl -s "$SERVER/results" | jq
 
 ---
 
-## 4. Command Summary Table
+## 4. Run Unit Tests
+
+Unit tests are built with **Boost.Test** framework and integrated with **CTest**.
+
+### 4.1 Via Docker
+
+```bash
+# Run all tests
+docker-compose --profile release run --rm app bash -c "cd build && ctest --output-on-failure"
+
+# Run specific test
+docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task1 --verbose"
+```
+
+### 4.2 Local
+
+```bash
+cd build
+
+# Run all tests
+ctest --output-on-failure
+
+# Run with verbose output
+ctest -V
+
+# Run specific test suite
+ctest -R Task2 --verbose
+```
+
+### 4.3 Test Summary
+
+| Test Suite | Tests | Description |
+|------------|-------|-------------|
+| Task1Tests | 8 | CustomSharedPtr, CustomWeakPtr, lock(), threading |
+| Task2Tests | 25 | 5 erase methods × 5 scenarios |
+| Task3Tests | 8 | BenchmarkResult validation, container benchmarks |
+| **Total** | **41** | |
+
+---
+
+## 5. Command Summary Table
 
 ### Run Tasks
 
 | Method | Command |
 |--------|---------|
-| Docker (interactive) | `docker-compose run --rm app` |
-| Docker (auto) | `docker-compose run --rm app python3 python/run.py --autorun` |
+| Docker (interactive) | `docker-compose --profile release run --rm --service-ports app` |
+| Docker (auto) | `docker-compose --profile release run --rm app python3 python/run.py --autorun` |
 | Local (console) | `python3 python/run.py` |
 | HTTP API | `curl http://localhost:8080/benchmark/task1` |
 
@@ -319,12 +439,45 @@ curl -s "$SERVER/results" | jq
 
 | Method | Command |
 |--------|---------|
-| Docker | `docker-compose run --rm app python3 python/view_results.py` |
+| Docker | `docker-compose --profile release run --rm app python3 python/view_results.py` |
 | Local | `python3 python/view_results.py` |
 | HTTP API | `curl http://localhost:8080/results` |
 | Statistics | `python3 python/view_results.py --stats` |
+| Compare Release/Debug | `python3 python/view_results.py --compare` |
+| Filter by build | `python3 python/view_results.py --build Release` |
 | Export CSV | `python3 python/view_results.py --export csv` |
 | Monitoring | `python3 python/view_results.py --watch` |
+
+### Run Unit Tests
+
+| Method | Command |
+|--------|---------|
+| Docker (all) | `docker-compose --profile release run --rm app bash -c "cd build && ctest --output-on-failure"` |
+| Docker (Task1) | `docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task1 --verbose"` |
+| Local (all) | `cd build && ctest --output-on-failure` |
+| Local (verbose) | `cd build && ctest -V` |
+| List tests | `cd build && ctest -N` |
+
+### Build Modes
+
+| Mode | Docker | Local | Use Case |
+|------|--------|-------|----------|
+| **Release (ULL)** | `docker-compose build app` | `cmake -B build -DCMAKE_BUILD_TYPE=Release` | Production, benchmarks |
+| **Debug** | `docker-compose --profile debug build app-debug` | `cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug` | Development, debugging |
+
+**Docker Run Commands:**
+| Mode | Command |
+|------|---------|
+| Release | `docker-compose --profile release run --rm --service-ports app` |
+| Debug | `docker-compose --profile debug run --rm --service-ports app-debug` |
+| Release Server | `docker-compose --profile server up` |
+| Debug Server | `docker-compose --profile debug-server up` (port 8081) |
+
+**Release mode optimizations:**
+- `-O3 -march=native -mtune=native` — CPU-specific
+- `-flto` — Link-Time Optimization
+- `-fno-exceptions -fno-rtti` — Disable C++ overhead
+- `-ffast-math -funroll-loops` — Aggressive optimizations
 
 ### Docker Management
 
@@ -332,7 +485,7 @@ curl -s "$SERVER/results" | jq
 |--------|---------|
 | Build | `docker-compose build` |
 | Rebuild (no cache) | `docker-compose build --no-cache` |
-| Start interactive console | `docker-compose run --rm app` |
+| Start interactive console | `docker-compose --profile release run --rm app` |
 | Start server | `docker-compose --profile server up` |
 | Stop | `docker-compose down` |
 | Clear data | `docker-compose down -v` |

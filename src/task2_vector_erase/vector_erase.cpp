@@ -29,7 +29,7 @@ void demonstrate_vector_erase() {
 // Benchmark function
 long long benchmark_vector_erase(
 	void (*method)(std::vector<int>&),
-	const std::string& method_name,
+	[[maybe_unused]] const std::string& method_name,
 	size_t vector_size,
 	int iterations,
 	int thread_count) {
@@ -45,11 +45,14 @@ long long benchmark_vector_erase(
 	} else {
 		// Multi-threaded mode
 		std::vector<std::thread> threads;
-		int iterations_per_thread= iterations / thread_count;
+		int base_iterations= iterations / thread_count;
+		int remainder= iterations % thread_count;
 
 		for(int t= 0; t < thread_count; ++t) {
-			threads.emplace_back([method, iterations_per_thread, vector_size]() {
-				for(int i= 0; i < iterations_per_thread; ++i) {
+			// Distribute remainder across first 'remainder' threads (one extra iteration each)
+			int thread_iterations= base_iterations + (t < remainder ? 1 : 0);
+			threads.emplace_back([method, thread_iterations, vector_size]() {
+				for(int i= 0; i < thread_iterations; ++i) {
 					std::vector<int> vec(vector_size);
 					std::iota(vec.begin(), vec.end(), 0);
 					method(vec);

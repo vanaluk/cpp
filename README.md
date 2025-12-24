@@ -18,6 +18,32 @@ A demonstration project for preparing for a C++ Developer interview. The project
 | **Docker** | Full environment: build, run, test |
 | **CMake** | Cross-platform build |
 
+## ⚡ Build Modes
+
+The project supports two build configurations optimized for different use cases:
+
+| Mode | Use Case | Key Features |
+|------|----------|--------------|
+| **Debug** | Development, debugging | `-g -O0`, full symbols, assertions enabled |
+| **Release** | Production, benchmarks | Ultra Low Latency optimizations (see below) |
+
+### Ultra Low Latency (ULL) Flags (Release only)
+
+| Flag | Purpose |
+|------|---------|
+| `-O3 -march=native -mtune=native` | Maximum CPU-specific optimizations |
+| `-flto` | Link-Time Optimization |
+| `-ffast-math` | Aggressive floating-point optimizations |
+| `-funroll-loops` | Loop unrolling |
+| `-fomit-frame-pointer` | Free up register (rbp) |
+| `-fno-exceptions -fno-rtti` | Disable C++ overhead |
+| `-fno-stack-protector` | Disable stack canaries |
+| `-fno-plt` | Direct function calls |
+| `-fprefetch-loop-arrays` | Cache prefetch hints |
+| `-falign-functions=32 -falign-loops=32` | Cache-line alignment |
+
+> **Note:** pybind11 module and Boost.Test require exceptions/RTTI and compile with `-fexceptions -frtti` even in Release mode.
+
 
 ## Project Structure
 
@@ -49,7 +75,46 @@ cpp/
 
 ## 🚀 Quick Start
 
-See [QUICKSTART.md](QUICKSTART.md) for detailed installation and running instructions.
+See [QUICK_START.md](QUICK_START.md) for detailed installation and running instructions.
+
+### Build Commands Summary
+
+```bash
+# Docker Release (ULL optimizations)
+docker-compose --profile release build app
+docker-compose --profile release run --rm --service-ports app
+
+# Docker Debug (with debug symbols)
+docker-compose --profile debug build app-debug
+docker-compose --profile debug run --rm --service-ports app-debug
+
+# Local Release build (Ultra Low Latency)
+cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j$(nproc)
+
+# Local Debug build (for development)
+cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build-debug -j$(nproc)
+```
+
+---
+
+## 📊 Quick Compare: Release vs Debug
+
+See [QUICK_COMPARE.md](QUICK_COMPARE.md) for detailed performance comparison between Release and Debug builds.
+
+### Compare Commands Summary
+
+```bash
+# Build both images
+docker-compose --profile release build app
+docker-compose --profile debug build app-debug
+
+# Run benchmarks on both builds (runs all 3 tasks automatically)
+docker-compose --profile release run --rm app python3 python/run.py --autorun
+docker-compose --profile debug run --rm app-debug python3 python/run.py --autorun
+
+# Compare results (shows speedup factor)
+docker-compose --profile viewer run --rm results_viewer python3 python/view_results.py --compare
+```
 
 ---
 
@@ -59,8 +124,10 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed installation and running instruc
 
 ```bash
 # Start PostgreSQL + interactive console
-docker-compose run --rm app
+docker-compose --profile release run --rm --service-ports app
 ```
+
+> **Note:** Use `--service-ports` to enable port mapping for menu option `[6] Start Boost.Asio server`.
 
 This will start:
 - PostgreSQL (with automatic DB initialization)
@@ -86,15 +153,33 @@ Server will be available at `http://localhost:8080`:
 docker-compose --profile viewer run --rm results_viewer
 ```
 
-### Mode 4: Run Tests Inside Docker (not implemented)
+### Mode 4: Run Unit Tests
+
+Unit tests are built with **Boost.Test** framework and integrated with **CTest**.
 
 ```bash
-# Run tests
-docker-compose run --rm app ./build/tests/run_tests
+# Run all unit tests
+docker-compose --profile release run --rm app bash -c "cd build && ctest --output-on-failure"
 
-# Or via bash
-docker-compose run --rm app bash -c "cd build && ctest --output-on-failure"
+# Run specific test suite
+docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task1 --verbose"
+docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task2 --verbose"
+docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task3 --verbose"
+
+# Run with detailed output
+docker-compose --profile release run --rm app bash -c "cd build && ctest -V"
+
+# List all available tests
+docker-compose --profile release run --rm app bash -c "cd build && ctest -N"
 ```
+
+**Test coverage:**
+| Test Suite | Tests | Description |
+|------------|-------|-------------|
+| Task1Tests | 8 | CustomSharedPtr, CustomWeakPtr, lock(), multi-threading |
+| Task2Tests | 25 | 5 erase methods × 5 scenarios each |
+| Task3Tests | 8 | BenchmarkResult validation, container benchmarks |
+| **Total** | **41** | |
 
 ### Separate Commands
 
@@ -103,16 +188,16 @@ docker-compose run --rm app bash -c "cd build && ctest --output-on-failure"
 docker-compose build
 
 # Run specific task
-docker-compose run --rm app python3 python/run.py
+docker-compose --profile release run --rm app python3 python/run.py
 
 # View results
-docker-compose run --rm app python3 python/view_results.py --stats
+docker-compose --profile release run --rm app python3 python/view_results.py --stats
 
 # Export results to CSV
-docker-compose run --rm app python3 python/view_results.py --export csv
+docker-compose --profile release run --rm app python3 python/view_results.py --export csv
 
 # Run in monitoring mode
-docker-compose run --rm app python3 python/view_results.py --watch
+docker-compose --profile release run --rm app python3 python/view_results.py --watch
 ```
 
 ---
@@ -188,6 +273,30 @@ Container comparison:
 
 ---
 
+## 🧪 Running Unit Tests (Local Build)
+
+After building the project locally:
+
+```bash
+cd build
+
+# Run all tests
+ctest --output-on-failure
+
+# Run specific test suite
+ctest -R Task1 --verbose    # Task 1: CustomSharedPtr, CustomWeakPtr
+ctest -R Task2 --verbose    # Task 2: Vector erase methods  
+ctest -R Task3 --verbose    # Task 3: Container benchmarks
+
+# Run with full output
+ctest -V
+
+# List all tests without running
+ctest -N
+```
+
+---
+
 ## 🔧 Development in VS Code
 
 1. Open project in VS Code
@@ -200,14 +309,17 @@ Container comparison:
 ## 📈 Profiling with perf
 
 ```bash
-# Record profile
+# Record profile (Release build)
 perf record ./build/CppInterviewDemo
+
+# Record profile (Debug build)
+perf record ./build-debug/CppInterviewDemo
 
 # Analyze
 perf report
 
 # Or via Docker
-docker-compose run --rm app perf record ./build/CppInterviewDemo
+docker-compose --profile release run --rm app perf record ./build/CppInterviewDemo
 ```
 
 ---

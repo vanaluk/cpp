@@ -1,7 +1,23 @@
 #include "container_benchmark.hpp"
-#include <iostream>
-#include <random>
 #include <algorithm>
+#include <chrono>
+#include <iostream>
+#include <map>
+#include <random>
+#include <unordered_map>
+#include <vector>
+
+namespace {
+
+// Estimated node overhead for std::map (red-black tree node)
+// Typical layout: 3 pointers (parent, left, right) + 1 color byte + padding
+constexpr size_t MAP_NODE_OVERHEAD= 3 * sizeof(void*) + sizeof(int);
+
+// Estimated node overhead for std::unordered_map (hash bucket entry)
+// Typical layout: 1 pointer (next) + cached hash value
+constexpr size_t UMAP_NODE_OVERHEAD= sizeof(void*) + sizeof(size_t);
+
+} // namespace
 
 BenchmarkResult benchmark_map(int element_count, int lookup_iterations) {
 	std::map<int, std::string> container;
@@ -35,8 +51,10 @@ BenchmarkResult benchmark_map(int element_count, int lookup_iterations) {
 	end= std::chrono::high_resolution_clock::now();
 	long long erase_time= std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-	// Approximate memory estimation (very rough)
-	size_t memory= sizeof(container) + element_count * (sizeof(int) + sizeof(std::string) + 32); // +32 for tree overhead
+	// Approximate memory estimation
+	// Each map node contains: key, value, and tree node overhead (pointers + color)
+	size_t memory= sizeof(container) +
+		static_cast<size_t>(element_count) * (sizeof(int) + sizeof(std::string) + MAP_NODE_OVERHEAD);
 
 	return {"std::map", insert_time, lookup_time, erase_time, memory};
 }
@@ -73,7 +91,10 @@ BenchmarkResult benchmark_unordered_map(int element_count, int lookup_iterations
 	end= std::chrono::high_resolution_clock::now();
 	long long erase_time= std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-	size_t memory= sizeof(container) + element_count * (sizeof(int) + sizeof(std::string) + 16); // +16 for hash table overhead
+	// Approximate memory estimation
+	// Each unordered_map node contains: key, value, and hash bucket overhead
+	size_t memory= sizeof(container) +
+		static_cast<size_t>(element_count) * (sizeof(int) + sizeof(std::string) + UMAP_NODE_OVERHEAD);
 
 	return {"std::unordered_map", insert_time, lookup_time, erase_time, memory};
 }
@@ -116,7 +137,9 @@ BenchmarkResult benchmark_vector(int element_count, int lookup_iterations) {
 	end= std::chrono::high_resolution_clock::now();
 	long long erase_time= std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-	size_t memory= sizeof(container) + element_count * sizeof(std::pair<int, std::string>);
+	// Memory estimation for vector - straightforward, no node overhead
+	size_t memory= sizeof(container) +
+		static_cast<size_t>(element_count) * sizeof(std::pair<int, std::string>);
 
 	return {"std::vector<pair>", insert_time, lookup_time, erase_time, memory};
 }

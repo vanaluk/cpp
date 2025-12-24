@@ -8,8 +8,9 @@
 void demonstrate_weak_ptr_lock() {
 	std::cout << "=== CustomWeakPtr::lock() Demonstration ===\n\n";
 
-	// Create shared_ptr
-	CustomSharedPtr<int> shared(new int(42));
+	// Create shared_ptr with demo value
+	constexpr int kDemoValue= 10;
+	CustomSharedPtr<int> shared(new int(kDemoValue));
 	std::cout << "1. Created CustomSharedPtr, use_count = " << shared.use_count() << "\n";
 
 	// Create weak_ptr
@@ -56,11 +57,14 @@ long long benchmark_weak_ptr_lock(int iterations, int thread_count) {
 	} else {
 		// Multi-threaded mode
 		std::vector<std::thread> threads;
-		int iterations_per_thread= iterations / thread_count;
+		int base_iterations= iterations / thread_count;
+		int remainder= iterations % thread_count;
 
 		for(int t= 0; t < thread_count; ++t) {
-			threads.emplace_back([iterations_per_thread]() {
-				for(int i= 0; i < iterations_per_thread; ++i) {
+			// Distribute remainder across first 'remainder' threads (one extra iteration each)
+			int thread_iterations= base_iterations + (t < remainder ? 1 : 0);
+			threads.emplace_back([thread_iterations]() {
+				for(int i= 0; i < thread_iterations; ++i) {
 					CustomSharedPtr<int> shared(new int(i));
 					CustomWeakPtr<int> weak(shared);
 					auto locked= weak.lock();

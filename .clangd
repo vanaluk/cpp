@@ -1,9 +1,4 @@
 CompileFlags:
-  Add:
-    - "-std=c++17"
-    - "-Wall"
-    - "-Wextra"
-    - "-pedantic"
   CompilationDatabase: build
 
 Diagnostics:
@@ -13,6 +8,8 @@ Diagnostics:
       - performance*
       - readability*
       - bugprone*
+    Remove:
+      - readability-identifier-length
 
 InlayHints:
   Enabled: Yes

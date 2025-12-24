@@ -2,9 +2,7 @@
 
 #include <vector>
 #include <algorithm>
-#include <iterator>
 #include <string>
-#include <functional>
 
 // Function declarations for demonstration and benchmarks
 void demonstrate_vector_erase();
@@ -69,15 +67,21 @@ void erase_every_second_copy(std::vector<T>& vec) {
 	vec= std::move(result);
 }
 
-// Method 5: Using std::partition (more efficient)
+// Method 5: Using in-place compaction with write pointer
+// This is O(n) and does not rely on implementation-specific behavior
 template<typename T>
 void erase_every_second_partition(std::vector<T>& vec) {
-	bool keep= true;
-	auto partition_point= std::partition(vec.begin(), vec.end(),
-		[&keep](const T&) {
-			bool result= keep;
-			keep= !keep;
-			return result;
-		});
-	vec.erase(partition_point, vec.end());
+	if(vec.empty()) {
+		return;
+	}
+
+	// Use write pointer to compact elements at even indices
+	size_t write_pos= 0;
+	for(size_t read_pos= 0; read_pos < vec.size(); read_pos+= 2) {
+		if(write_pos != read_pos) {
+			vec[write_pos]= std::move(vec[read_pos]);
+		}
+		++write_pos;
+	}
+	vec.resize(write_pos);
 }
