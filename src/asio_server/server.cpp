@@ -12,6 +12,39 @@
 
 using boost::asio::ip::tcp;
 
+// HTTP status codes
+namespace http_status {
+constexpr int kOk= 200;
+constexpr int kBadRequest= 400;
+constexpr int kNotFound= 404;
+} // namespace http_status
+
+// Server configuration constants
+namespace server_config {
+constexpr short kDefaultPort= 8080;
+constexpr size_t kReadBufferSize= 4096;
+constexpr size_t kMaxThreads= 64;
+constexpr double kNanosecondsPerSecond= 1'000'000'000.0;
+} // namespace server_config
+
+// Benchmark parameter limits
+namespace benchmark_limits {
+constexpr size_t kDefaultTask1Iterations= 1000000;
+constexpr size_t kMaxTask1Iterations= 100000000;
+
+constexpr size_t kDefaultVectorSize= 100000;
+constexpr size_t kMaxVectorSize= 10000000;
+constexpr size_t kDefaultVectorIterations= 100;
+constexpr size_t kMaxVectorIterations= 10000;
+
+constexpr size_t kDefaultMappingSize= 100000;
+constexpr size_t kMaxMappingSize= 10000000;
+constexpr size_t kDefaultLookups= 1000000;
+constexpr size_t kMaxLookups= 100000000;
+
+constexpr int kDefaultResultsLimit= 100;
+} // namespace benchmark_limits
+
 /**
  * Boost.Asio HTTP server for benchmarks
  *
@@ -44,7 +77,7 @@ private:
 
 	class Session : public std::enable_shared_from_this<Session> {
 	public:
-		explicit Session(boost::asio::any_io_executor executor) :
+		explicit Session(const boost::asio::any_io_executor& executor) :
 			socket_(executor) {}
 
 		tcp::socket& socket() {
@@ -77,11 +110,12 @@ private:
 		}
 
 		// Parse query parameters
-		std::map<std::string, std::string> parse_query(const std::string& url) {
+		static std::map<std::string, std::string> parse_query(const std::string& url) {
 			std::map<std::string, std::string> params;
 			size_t pos= url.find('?');
-			if(pos == std::string::npos)
+			if(pos == std::string::npos) {
 				return params;
+			}
 
 			std::string query= url.substr(pos + 1);
 			std::istringstream iss(query);
@@ -96,7 +130,7 @@ private:
 			return params;
 		}
 
-		int get_param_int(const std::map<std::string, std::string>& params,
+		static int get_param_int(const std::map<std::string, std::string>& params,
 			const std::string& key, int default_value) {
 			auto it= params.find(key);
 			if(it != params.end()) {
@@ -108,8 +142,8 @@ private:
 		}
 
 		// Get positive integer parameter (returns 0 for invalid/negative values)
-		size_t get_param_size(const std::map<std::string, std::string>& params,
-			const std::string& key, size_t default_value, size_t max_value= 100000000) {
+		static size_t get_param_size(const std::map<std::string, std::string>& params,
+			const std::string& key, size_t default_value, size_t max_value) { // NOLINT(bugprone-easily-swappable-parameters)
 			auto it= params.find(key);
 			if(it != params.end()) {
 				try {
@@ -128,10 +162,18 @@ private:
 			return default_value;
 		}
 
-		std::string json_response(int code, const std::string& body) {
+		static std::string json_response(int code, const std::string& body) {
 			std::stringstream ss;
-			std::string status_text= (code == 200) ? "OK" : (code == 400) ? "Bad Request"
-																		  : "Error";
+			std::string status_text;
+			if(code == http_status::kOk) {
+				status_text= "OK";
+			} else if(code == http_status::kBadRequest) {
+				status_text= "Bad Request";
+			} else if(code == http_status::kNotFound) {
+				status_text= "Not Found";
+			} else {
+				status_text= "Error";
+			}
 			ss << "HTTP/1.1 " << code << " " << status_text << "\r\n";
 			ss << "Content-Type: application/json\r\n";
 			ss << "Access-Control-Allow-Origin: *\r\n";
@@ -141,19 +183,20 @@ private:
 			return ss.str();
 		}
 
-		std::string json_error(int code, const std::string& message) {
+		static std::string json_error(int code, const std::string& message) {
 			std::stringstream json;
 			json << "{\"error\": \"" << message << "\", \"status\": \"error\"}";
 			return json_response(code, json.str());
 		}
 
-		double safe_ops_per_sec(double operations, long long duration_ns) {
+		static double safe_ops_per_sec(double operations, long long duration_ns) {
 			if(duration_ns <= 0) {
 				return 0.0;
 			}
-			return operations / (static_cast<double>(duration_ns) / 1e9);
+			return operations / (static_cast<double>(duration_ns) / server_config::kNanosecondsPerSecond);
 		}
 
+		// NOLINTNEXTLINE(readability-convert-member-functions-to-static, readability-function-cognitive-complexity)
 		std::string process_request(const std::string& request) {
 			// Extract URL from request
 			std::string url;
@@ -165,19 +208,20 @@ private:
 
 			// GET /health
 			if(url.find("/health") == 0) {
-				return json_response(200, R"({"status": "ok", "server": "Boost.Asio C++ Interview Demo"})");
+				return json_response(http_status::kOk, R"({"status": "ok", "server": "Boost.Asio C++ Interview Demo"})");
 			}
 
 			// GET /benchmark/task1
 			if(url.find("/benchmark/task1") == 0) {
-				size_t iterations= get_param_size(params, "iterations", 1000000, 100000000);
-				size_t threads= get_param_size(params, "threads", 1, 64);
+				size_t iterations= get_param_size(params, "iterations",
+					benchmark_limits::kDefaultTask1Iterations, benchmark_limits::kMaxTask1Iterations);
+				size_t threads= get_param_size(params, "threads", 1, server_config::kMaxThreads);
 
 				if(iterations == 0) {
-					return json_error(400, "Invalid 'iterations' parameter: must be positive integer <= 100000000");
+					return json_error(http_status::kBadRequest, "Invalid 'iterations' parameter: must be positive integer <= 100000000");
 				}
 				if(threads == 0) {
-					return json_error(400, "Invalid 'threads' parameter: must be positive integer <= 64");
+					return json_error(http_status::kBadRequest, "Invalid 'threads' parameter: must be positive integer <= 64");
 				}
 
 				// Call real C++ benchmark function
@@ -203,23 +247,25 @@ private:
 				json << "  \"status\": \"success\"\n";
 				json << "}";
 
-				return json_response(200, json.str());
+				return json_response(http_status::kOk, json.str());
 			}
 
 			// GET /benchmark/task2
 			if(url.find("/benchmark/task2") == 0) {
-				size_t size= get_param_size(params, "size", 100000, 10000000);
-				size_t iterations= get_param_size(params, "iterations", 100, 10000);
-				size_t threads= get_param_size(params, "threads", 1, 64);
+				size_t size= get_param_size(params, "size",
+					benchmark_limits::kDefaultVectorSize, benchmark_limits::kMaxVectorSize);
+				size_t iterations= get_param_size(params, "iterations",
+					benchmark_limits::kDefaultVectorIterations, benchmark_limits::kMaxVectorIterations);
+				size_t threads= get_param_size(params, "threads", 1, server_config::kMaxThreads);
 
 				if(size == 0) {
-					return json_error(400, "Invalid 'size' parameter: must be positive integer <= 10000000");
+					return json_error(http_status::kBadRequest, "Invalid 'size' parameter: must be positive integer <= 10000000");
 				}
 				if(iterations == 0) {
-					return json_error(400, "Invalid 'iterations' parameter: must be positive integer <= 10000");
+					return json_error(http_status::kBadRequest, "Invalid 'iterations' parameter: must be positive integer <= 10000");
 				}
 				if(threads == 0) {
-					return json_error(400, "Invalid 'threads' parameter: must be positive integer <= 64");
+					return json_error(http_status::kBadRequest, "Invalid 'threads' parameter: must be positive integer <= 64");
 				}
 
 				// Call real benchmarks for each method
@@ -255,8 +301,9 @@ private:
 					json << "\"time_ns\": " << methods[i].second << ", ";
 					json << "\"ops_per_sec\": " << std::fixed
 						 << safe_ops_per_sec(static_cast<double>(iterations), methods[i].second) << "}";
-					if(i < methods.size() - 1)
+					if(i < methods.size() - 1) {
 						json << ",";
+					}
 					json << "\n";
 				}
 
@@ -265,19 +312,21 @@ private:
 				json << "  \"status\": \"success\"\n";
 				json << "}";
 
-				return json_response(200, json.str());
+				return json_response(http_status::kOk, json.str());
 			}
 
 			// GET /benchmark/task3
 			if(url.find("/benchmark/task3") == 0) {
-				size_t size= get_param_size(params, "size", 100000, 10000000);
-				size_t lookups= get_param_size(params, "lookups", 1000000, 100000000);
+				size_t size= get_param_size(params, "size",
+					benchmark_limits::kDefaultMappingSize, benchmark_limits::kMaxMappingSize);
+				size_t lookups= get_param_size(params, "lookups",
+					benchmark_limits::kDefaultLookups, benchmark_limits::kMaxLookups);
 
 				if(size == 0) {
-					return json_error(400, "Invalid 'size' parameter: must be positive integer <= 10000000");
+					return json_error(http_status::kBadRequest, "Invalid 'size' parameter: must be positive integer <= 10000000");
 				}
 				if(lookups == 0) {
-					return json_error(400, "Invalid 'lookups' parameter: must be positive integer <= 100000000");
+					return json_error(http_status::kBadRequest, "Invalid 'lookups' parameter: must be positive integer <= 100000000");
 				}
 
 				// Call real benchmarks for each container
@@ -301,10 +350,12 @@ private:
 
 				// Helper to get complexity string
 				auto get_complexity= [](const std::string& name) -> std::string {
-					if(name == "std::map")
+					if(name == "std::map") {
 						return "O(log n)";
-					if(name == "std::unordered_map")
+					}
+					if(name == "std::unordered_map") {
 						return "O(1) average";
+					}
 					return "O(n)";
 				};
 
@@ -340,8 +391,9 @@ private:
 					json << "\"complexity\": \"" << get_complexity(result.container_name) << "\", ";
 					json << "\"ops_per_sec\": " << std::fixed
 						 << safe_ops_per_sec(static_cast<double>(lookups), result.lookup_time_ns) << "}";
-					if(i < results.size() - 1)
+					if(i < results.size() - 1) {
 						json << ",";
+					}
 					json << "\n";
 				}
 
@@ -351,24 +403,24 @@ private:
 				json << "  \"status\": \"success\"\n";
 				json << "}";
 
-				return json_response(200, json.str());
+				return json_response(http_status::kOk, json.str());
 			}
 
 			// GET /results
 			if(url.find("/results") == 0) {
-				int limit= get_param_int(params, "limit", 100);
+				int limit= get_param_int(params, "limit", benchmark_limits::kDefaultResultsLimit);
 				int task= get_param_int(params, "task", 0);
 
 				std::string results_json= get_db_client().get_results_json(limit, task);
-				return json_response(200, results_json);
+				return json_response(http_status::kOk, results_json);
 			}
 
 			// 404 Not Found
-			return json_response(404, R"({"error": "Not found", "available_endpoints": ["/health", "/benchmark/task1", "/benchmark/task2", "/benchmark/task3", "/results"]})");
+			return json_response(http_status::kNotFound, R"({"error": "Not found", "available_endpoints": ["/health", "/benchmark/task1", "/benchmark/task2", "/benchmark/task3", "/results"]})");
 		}
 
 		tcp::socket socket_;
-		std::array<char, 4096> data_;
+		std::array<char, server_config::kReadBufferSize> data_;
 	};
 
 	tcp::acceptor acceptor_;
@@ -397,7 +449,7 @@ void print_usage(const char* program_name) {
 
 int main(int argc, char* argv[]) {
 	try {
-		short port= 8080;
+		short port= server_config::kDefaultPort;
 
 		if(argc > 1) {
 			std::string arg= argv[1];

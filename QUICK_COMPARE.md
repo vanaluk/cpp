@@ -60,6 +60,13 @@ docker-compose --profile debug run --rm --service-ports app-debug
 
 ### Option B: Using REST API Server
 
+**Server URLs by build type:**
+
+| Build | URL | Port |
+|-------|-----|------|
+| **Release** | `http://localhost:8080` | 8080 |
+| **Debug** | `http://localhost:8081` | 8081 |
+
 #### Start Release Server (port 8080)
 
 ```bash
@@ -219,4 +226,21 @@ In the comparison output, you may see **Ops/s** (Operations per Second) metrics:
 3. **Warm up the CPU** with a few test runs before final measurements
 4. **Close other applications** to reduce noise in measurements
 5. **Check database** has results from both builds before comparing
+
+---
+
+## IDE Setup (clangd)
+
+For local development with IDE support, generate `compile_commands.json`:
+
+```bash
+# Build with compile commands export
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake --build build
+
+# Create symlink for IDE
+ln -sf build/compile_commands.json compile_commands.json
+
+# Restart clangd in IDE: Ctrl+Shift+P → "clangd: Restart language server"
+```
 

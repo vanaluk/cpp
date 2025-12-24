@@ -3,6 +3,11 @@
 #include "task2_vector_erase/vector_erase.hpp"
 #include "task3_mapping/container_benchmark.hpp"
 
+namespace {
+constexpr int kDemoElementCount= 10000;
+constexpr int kDemoLookupIterations= 100000;
+} // namespace
+
 int main() {
 	std::cout << "C++ Interview Demo Project\n";
 	std::cout << "==========================\n\n";
@@ -14,7 +19,7 @@ int main() {
 	demonstrate_vector_erase();
 
 	// Demonstrate task 3
-	compare_containers(10000, 100000);
+	compare_containers(kDemoElementCount, kDemoLookupIterations);
 
 	return 0;
 }

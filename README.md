@@ -136,11 +136,20 @@ This will start:
 ### Mode 2: REST API Server for Benchmarks
 
 ```bash
-# Start PostgreSQL + Boost.Asio HTTP server
+# Start PostgreSQL + Boost.Asio HTTP server (Release)
 docker-compose --profile server up
+
+# Start Debug server (port 8081)
+docker-compose --profile debug-server up
 ```
 
-Server will be available at `http://localhost:8080`:
+**Server endpoints:**
+| Build | URL | Port |
+|-------|-----|------|
+| **Release** | `http://localhost:8080` | 8080 |
+| **Debug** | `http://localhost:8081` | 8081 |
+
+Available endpoints:
 - `GET /benchmark/task1` — task 1 benchmark
 - `GET /benchmark/task2?size=100000` — task 2 benchmark
 - `GET /benchmark/task3?size=100000` — task 3 benchmark
@@ -299,10 +308,27 @@ ctest -N
 
 ## 🔧 Development in VS Code
 
+### IDE Setup (clangd support)
+
+The project uses `compile_commands.json` for IDE features (code completion, go-to-definition, linting). After building:
+
+```bash
+# Option 1: Create symlink in project root (recommended)
+ln -sf build/compile_commands.json compile_commands.json
+
+# Option 2: Configure .clangd to point to build directory (already done)
+# See .clangd file: CompilationDatabase: build
+```
+
+### VS Code
+
 1. Open project in VS Code
-2. Install extensions: C/C++, CMake Tools
-3. `Ctrl+Shift+P` → "CMake: Configure"
-4. `F5` for debugging
+2. Install extensions: clangd
+3. Build the project first: `cmake -B build && cmake --build build`
+4. Restart clangd: `Ctrl+Shift+P` → "clangd: Restart language server"
+5. `F5` for debugging
+
+> **Note:** If clangd shows "file not found" errors, ensure `compile_commands.json` exists in `build/` directory and restart the language server.
 
 ---
 

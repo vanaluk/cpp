@@ -1,8 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <memory>
-#include <string>
 
 // Function declarations for demonstration and benchmarks
 void demonstrate_weak_ptr_lock();
@@ -29,7 +27,8 @@ public:
 		weak_count_(new std::atomic<int>(0)) {
 	}
 
-	// Private constructor for lock()
+	// Internal constructor for lock() - ref_count and weak_count are related counters
+	// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 	CustomSharedPtr(T* ptr, std::atomic<int>* ref_count, std::atomic<int>* weak_count) :
 		ptr_(ptr),
 		ref_count_(ref_count),
@@ -38,7 +37,7 @@ public:
 	}
 
 	~CustomSharedPtr() {
-		if(ptr_ && ref_count_) {
+		if(ptr_ != nullptr && ref_count_ != nullptr) {
 			// Decrease reference counter
 			int count= --(*ref_count_);
 			if(count == 0) {
@@ -59,7 +58,7 @@ public:
 		ptr_(other.ptr_),
 		ref_count_(other.ref_count_),
 		weak_count_(other.weak_count_) {
-		if(ref_count_) {
+		if(ref_count_ != nullptr) {
 			++(*ref_count_);
 		}
 	}
@@ -67,7 +66,7 @@ public:
 	CustomSharedPtr& operator=(const CustomSharedPtr& other) {
 		if(this != &other) {
 			// Decrease old counter
-			if(ref_count_) {
+			if(ref_count_ != nullptr) {
 				int count= --(*ref_count_);
 				if(count == 0) {
 					delete ptr_;
@@ -83,7 +82,7 @@ public:
 			ref_count_= other.ref_count_;
 			weak_count_= other.weak_count_;
 
-			if(ref_count_) {
+			if(ref_count_ != nullptr) {
 				++(*ref_count_);
 			}
 		}
@@ -111,7 +110,7 @@ public:
 		return ptr_;
 	}
 	int use_count() const {
-		return ref_count_ ? ref_count_->load() : 0;
+		return ref_count_ != nullptr ? ref_count_->load() : 0;
 	}
 	bool expired() const {
 		return use_count() == 0;
@@ -145,15 +144,15 @@ public:
 		ptr_(shared.ptr_),
 		ref_count_(shared.ref_count_),
 		weak_count_(shared.weak_count_) {
-		if(weak_count_) {
+		if(weak_count_ != nullptr) {
 			++(*weak_count_);
 		}
 	}
 
 	~CustomWeakPtr() {
-		if(weak_count_) {
+		if(weak_count_ != nullptr) {
 			int count= --(*weak_count_);
-			if(count == 0 && ref_count_ && ref_count_->load() == 0) {
+			if(count == 0 && ref_count_ != nullptr && ref_count_->load() == 0) {
 				// No more shared_ptr and weak_ptr - can delete counters
 				delete ref_count_;
 				delete weak_count_;
@@ -166,7 +165,7 @@ public:
 		ptr_(other.ptr_),
 		ref_count_(other.ref_count_),
 		weak_count_(other.weak_count_) {
-		if(weak_count_) {
+		if(weak_count_ != nullptr) {
 			++(*weak_count_);
 		}
 	}
@@ -174,9 +173,9 @@ public:
 	CustomWeakPtr& operator=(const CustomWeakPtr& other) {
 		if(this != &other) {
 			// Decrease old weak_count
-			if(weak_count_) {
+			if(weak_count_ != nullptr) {
 				int count= --(*weak_count_);
-				if(count == 0 && ref_count_ && ref_count_->load() == 0) {
+				if(count == 0 && ref_count_ != nullptr && ref_count_->load() == 0) {
 					delete ref_count_;
 					delete weak_count_;
 				}
@@ -186,7 +185,7 @@ public:
 			ref_count_= other.ref_count_;
 			weak_count_= other.weak_count_;
 
-			if(weak_count_) {
+			if(weak_count_ != nullptr) {
 				++(*weak_count_);
 			}
 		}
@@ -203,7 +202,7 @@ public:
 	 * 4. If object is already deleted - return nullptr
 	 */
 	CustomSharedPtr<T> lock() const {
-		if(!ref_count_ || !weak_count_) {
+		if(ref_count_ == nullptr || weak_count_ == nullptr) {
 			return CustomSharedPtr<T>();
 		}
 
@@ -224,11 +223,11 @@ public:
 	}
 
 	bool expired() const {
-		return !ref_count_ || ref_count_->load() == 0;
+		return ref_count_ == nullptr || ref_count_->load() == 0;
 	}
 
 	int use_count() const {
-		return ref_count_ ? ref_count_->load() : 0;
+		return ref_count_ != nullptr ? ref_count_->load() : 0;
 	}
 
 private:

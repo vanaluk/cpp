@@ -107,19 +107,23 @@ cd cpp
 
 # Option 2: Manually - Release build (Ultra Low Latency optimizations)
 mkdir -p build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cmake --build . -j$(nproc)
 cd ..
 
 # Option 3: Debug build (for development and debugging)
 mkdir -p build-debug && cd build-debug
-cmake .. -DCMAKE_BUILD_TYPE=Debug
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cmake --build . -j$(nproc)
 cd ..
+
+# Create symlink for IDE support (clangd)
+ln -sf build/compile_commands.json compile_commands.json
 ```
 
 > **Note:** Use `--local` flag to guarantee local build even if Docker is installed.
 > Use `./install.sh --help` to see all available options.
+> The `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON` flag generates `compile_commands.json` for IDE support.
 
 #### Build Modes Comparison
 
@@ -257,15 +261,25 @@ python3 python/view_results.py --limit 10
 ### 3.1 Start Server
 
 ```bash
-# Via Docker (recommended)
+# Via Docker - Release server (port 8080)
 docker-compose --profile server up
+
+# Via Docker - Debug server (port 8081)
+docker-compose --profile debug-server up
 
 # Or locally (Release build)
 ./build/asio_server 8080
 
 # Or locally (Debug build)
-./build-debug/asio_server 8080
+./build-debug/asio_server 8081
 ```
+
+**Server URLs by build type:**
+
+| Build | URL | Port |
+|-------|-----|------|
+| **Release** | `http://localhost:8080` | 8080 |
+| **Debug** | `http://localhost:8081` | 8081 |
 
 ### 3.2 Available Endpoints
 
@@ -280,8 +294,11 @@ docker-compose --profile server up
 ### 3.3 Request Examples
 
 ```bash
-# Task 1 benchmark
+# Task 1 benchmark (Release server)
 curl http://localhost:8080/benchmark/task1
+
+# Task 1 benchmark (Debug server)
+curl http://localhost:8081/benchmark/task1
 
 # Task 2 benchmark with parameters
 curl "http://localhost:8080/benchmark/task2?size=100000&iterations=100"
@@ -424,7 +441,45 @@ ctest -R Task2 --verbose
 
 ---
 
-## 5. Command Summary Table
+## 5. IDE Setup (clangd / VS Code)
+
+For IDE features like code completion, go-to-definition, and linting, you need `compile_commands.json`:
+
+### After Local Build
+
+```bash
+# compile_commands.json is automatically generated in build/
+# Create symlink in project root for easier IDE access
+ln -sf build/compile_commands.json compile_commands.json
+
+# Or for debug build
+ln -sf build-debug/compile_commands.json compile_commands.json
+```
+
+### After Docker Build
+
+```bash
+# Copy compile_commands.json from Docker container
+docker-compose --profile release run --rm app cat /app/build/compile_commands.json > compile_commands.json
+```
+
+### Restart Language Server
+
+After generating `compile_commands.json`:
+- **VS Code:** `Ctrl+Shift+P` → "clangd: Restart language server"
+- Or close and reopen the IDE
+
+### Troubleshooting
+
+If clangd shows "file not found" errors:
+1. Ensure project is built: `cmake -B build && cmake --build build`
+2. Check `build/compile_commands.json` exists and is not empty
+3. Restart clangd language server
+4. Check `.clangd` file points to correct directory: `CompilationDatabase: build`
+
+---
+
+## 6. Command Summary Table
 
 ### Run Tasks
 
