@@ -13,6 +13,17 @@ CREATE TABLE IF NOT EXISTS benchmark_results (
     notes TEXT
 );
 
+-- Migration: Add build_type column if it doesn't exist (for existing databases)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'benchmark_results' AND column_name = 'build_type'
+    ) THEN
+        ALTER TABLE benchmark_results ADD COLUMN build_type VARCHAR(20) DEFAULT 'Release';
+    END IF;
+END $$;
+
 -- Indexes for fast search
 CREATE INDEX IF NOT EXISTS idx_benchmark_results_task ON benchmark_results(task_number);
 CREATE INDEX IF NOT EXISTS idx_benchmark_results_timestamp ON benchmark_results(timestamp);
