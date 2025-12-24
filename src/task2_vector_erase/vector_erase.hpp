@@ -67,16 +67,21 @@ void erase_every_second_copy(std::vector<T>& vec) {
 	vec= std::move(result);
 }
 
-// Method 5: Using std::stable_partition with index tracking
-// Note: std::partition does not guarantee predicate call order, so we use
-// std::stable_partition with index-based tracking via std::distance
+// Method 5: Using in-place compaction with write pointer
+// This is O(n) and does not rely on implementation-specific behavior
 template<typename T>
 void erase_every_second_partition(std::vector<T>& vec) {
-	auto partition_point= std::stable_partition(vec.begin(), vec.end(),
-		[&vec](const T& elem) {
-			// Calculate original index using pointer arithmetic
-			size_t index= static_cast<size_t>(&elem - vec.data());
-			return index % 2 == 0; // Keep elements at even indices
-		});
-	vec.erase(partition_point, vec.end());
+	if(vec.empty()) {
+		return;
+	}
+
+	// Use write pointer to compact elements at even indices
+	size_t write_pos= 0;
+	for(size_t read_pos= 0; read_pos < vec.size(); read_pos+= 2) {
+		if(write_pos != read_pos) {
+			vec[write_pos]= std::move(vec[read_pos]);
+		}
+		++write_pos;
+	}
+	vec.resize(write_pos);
 }
