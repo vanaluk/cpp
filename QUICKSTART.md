@@ -41,7 +41,22 @@ docker-compose run --rm app python3 python/view_results.py --export csv
 docker-compose run --rm app ./build/CppInterviewDemo
 ```
 
-### 1.4 Stop
+### 1.4 Run Unit Tests
+
+```bash
+# Run all unit tests inside Docker
+docker-compose run --rm app bash -c "cd build && ctest --output-on-failure"
+
+# Run specific test suite
+docker-compose run --rm app bash -c "cd build && ctest -R Task1 --verbose"
+docker-compose run --rm app bash -c "cd build && ctest -R Task2 --verbose"
+docker-compose run --rm app bash -c "cd build && ctest -R Task3 --verbose"
+
+# Run tests with detailed output
+docker-compose run --rm app bash -c "cd build && ctest -V"
+```
+
+### 1.5 Stop
 
 ```bash
 # Stop all containers
@@ -139,7 +154,32 @@ python3 python/run.py
 # [6] - Start HTTP server
 ```
 
-### 2.5 View Results
+### 2.5 Run Unit Tests
+
+```bash
+cd build
+
+# Run all tests
+ctest --output-on-failure
+
+# Run specific test suite
+ctest -R Task1 --verbose    # Task 1: CustomSharedPtr, CustomWeakPtr
+ctest -R Task2 --verbose    # Task 2: Vector erase methods
+ctest -R Task3 --verbose    # Task 3: Container benchmarks
+
+# Run all tests with detailed output
+ctest -V
+
+# Run tests and show test names
+ctest -N    # List all tests without running
+```
+
+**Test coverage:**
+- **Task 1:** 8 tests (CustomSharedPtr, CustomWeakPtr, lock(), multi-threading)
+- **Task 2:** 25 tests (5 erase methods × 5 scenarios each)
+- **Task 3:** 8 tests (BenchmarkResult validation, positive values, scaling)
+
+### 2.6 View Results
 
 ```bash
 # All results
@@ -304,7 +344,47 @@ curl -s "$SERVER/results" | jq
 
 ---
 
-## 4. Command Summary Table
+## 4. Run Unit Tests
+
+Unit tests are built with **Boost.Test** framework and integrated with **CTest**.
+
+### 4.1 Via Docker
+
+```bash
+# Run all tests
+docker-compose run --rm app bash -c "cd build && ctest --output-on-failure"
+
+# Run specific test
+docker-compose run --rm app bash -c "cd build && ctest -R Task1 --verbose"
+```
+
+### 4.2 Local
+
+```bash
+cd build
+
+# Run all tests
+ctest --output-on-failure
+
+# Run with verbose output
+ctest -V
+
+# Run specific test suite
+ctest -R Task2 --verbose
+```
+
+### 4.3 Test Summary
+
+| Test Suite | Tests | Description |
+|------------|-------|-------------|
+| Task1Tests | 8 | CustomSharedPtr, CustomWeakPtr, lock(), threading |
+| Task2Tests | 25 | 5 erase methods × 5 scenarios |
+| Task3Tests | 8 | BenchmarkResult validation, container benchmarks |
+| **Total** | **41** | |
+
+---
+
+## 5. Command Summary Table
 
 ### Run Tasks
 
@@ -325,6 +405,16 @@ curl -s "$SERVER/results" | jq
 | Statistics | `python3 python/view_results.py --stats` |
 | Export CSV | `python3 python/view_results.py --export csv` |
 | Monitoring | `python3 python/view_results.py --watch` |
+
+### Run Unit Tests
+
+| Method | Command |
+|--------|---------|
+| Docker (all) | `docker-compose run --rm app bash -c "cd build && ctest --output-on-failure"` |
+| Docker (Task1) | `docker-compose run --rm app bash -c "cd build && ctest -R Task1 --verbose"` |
+| Local (all) | `cd build && ctest --output-on-failure` |
+| Local (verbose) | `cd build && ctest -V` |
+| List tests | `cd build && ctest -N` |
 
 ### Docker Management
 

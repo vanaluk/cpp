@@ -8,6 +8,9 @@
 #include <cstdlib>
 #include <map>
 #include <regex>
+#include "task1_weak_ptr/custom_weak_ptr.hpp"
+#include "task2_vector_erase/vector_erase.hpp"
+#include "task3_mapping/container_benchmark.hpp"
 
 using boost::asio::ip::tcp;
 
@@ -136,16 +139,8 @@ private:
 				int iterations= get_param_int(params, "iterations", 1000000);
 				int threads= get_param_int(params, "threads", 1);
 
-				auto start= std::chrono::high_resolution_clock::now();
-				// TODO: Call real weak_ptr::lock() benchmark here
-				// Simulation of work
-				volatile int sum= 0;
-				for(int i= 0; i < iterations / 1000; ++i) {
-					sum+= i;
-				}
-				auto end= std::chrono::high_resolution_clock::now();
-				auto duration= std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-
+				// Call real C++ benchmark function
+				long long duration= benchmark_weak_ptr_lock(iterations, threads);
 				double ops_per_sec= static_cast<double>(iterations) / (duration / 1e9);
 
 				std::stringstream json;
@@ -167,15 +162,15 @@ private:
 			if(url.find("/benchmark/task2") == 0) {
 				int size= get_param_int(params, "size", 100000);
 				int iterations= get_param_int(params, "iterations", 100);
+				int threads= get_param_int(params, "threads", 1);
 
-				// TODO: Call real benchmarks for each method here
-				// Simulate results
+				// Call real benchmarks for each method
 				std::vector<std::pair<std::string, long long>> methods= {
-					{"naive_erase", 45670000},
-					{"remove_if_erase", 1230000},
-					{"iterators", 43210000},
-					{"copy_to_new", 980000},
-					{"partition", 890000}};
+					{"naive_erase", benchmark_vector_erase(erase_every_second_naive<int>, "naive", size, iterations, threads)},
+					{"remove_if_erase", benchmark_vector_erase(erase_every_second_remove_if<int>, "remove_if", size, iterations, threads)},
+					{"iterators_erase", benchmark_vector_erase(erase_every_second_iterators<int>, "iterators", size, iterations, threads)},
+					{"copy_erase", benchmark_vector_erase(erase_every_second_copy<int>, "copy", size, iterations, threads)},
+					{"partition_erase", benchmark_vector_erase(erase_every_second_partition<int>, "partition", size, iterations, threads)}};
 
 				std::stringstream json;
 				json << "{\n";
@@ -183,6 +178,7 @@ private:
 				json << "  \"task_name\": \"Vector erase\",\n";
 				json << "  \"vector_size\": " << size << ",\n";
 				json << "  \"iterations\": " << iterations << ",\n";
+				json << "  \"threads\": " << threads << ",\n";
 				json << "  \"methods\": [\n";
 
 				for(size_t i= 0; i < methods.size(); ++i) {
@@ -207,11 +203,27 @@ private:
 				int size= get_param_int(params, "size", 100000);
 				int lookups= get_param_int(params, "lookups", 1000000);
 
-				// TODO: Call real benchmarks for each container here
-				std::vector<std::tuple<std::string, long long, std::string>> containers= {
-					{"std::map", 15000000, "O(log n)"},
-					{"std::unordered_map", 800000, "O(1) average"},
-					{"std::vector<pair>", 95000000, "O(n)"}};
+				// Call real benchmarks for each container
+				BenchmarkResult map_result= benchmark_map(size, lookups);
+				BenchmarkResult umap_result= benchmark_unordered_map(size, lookups);
+				BenchmarkResult vec_result= benchmark_vector(size, lookups);
+
+				// Helper to get complexity string
+				auto get_complexity= [](const std::string& name) -> std::string {
+					if(name == "std::map")
+						return "O(log n)";
+					if(name == "std::unordered_map")
+						return "O(1) average";
+					return "O(n)";
+				};
+
+				// Determine recommendation based on actual results
+				std::string recommendation= "std::unordered_map for best lookup performance";
+				if(umap_result.lookup_time_ns > map_result.lookup_time_ns) {
+					recommendation= "std::map for this dataset size";
+				}
+
+				std::vector<BenchmarkResult> results= {map_result, umap_result, vec_result};
 
 				std::stringstream json;
 				json << "{\n";
@@ -221,19 +233,23 @@ private:
 				json << "  \"lookups\": " << lookups << ",\n";
 				json << "  \"containers\": [\n";
 
-				for(size_t i= 0; i < containers.size(); ++i) {
-					json << "    {\"name\": \"" << std::get<0>(containers[i]) << "\", ";
-					json << "\"time_ns\": " << std::get<1>(containers[i]) << ", ";
-					json << "\"complexity\": \"" << std::get<2>(containers[i]) << "\", ";
+				for(size_t i= 0; i < results.size(); ++i) {
+					const auto& result= results[i];
+					json << "    {\"name\": \"" << result.container_name << "\", ";
+					json << "\"insert_ns\": " << result.insert_time_ns << ", ";
+					json << "\"lookup_ns\": " << result.lookup_time_ns << ", ";
+					json << "\"erase_ns\": " << result.erase_time_ns << ", ";
+					json << "\"memory_bytes\": " << result.memory_usage_bytes << ", ";
+					json << "\"complexity\": \"" << get_complexity(result.container_name) << "\", ";
 					json << "\"ops_per_sec\": " << std::fixed
-						 << (static_cast<double>(lookups) / (std::get<1>(containers[i]) / 1e9)) << "}";
-					if(i < containers.size() - 1)
+						 << (static_cast<double>(lookups) / (result.lookup_time_ns / 1e9)) << "}";
+					if(i < results.size() - 1)
 						json << ",";
 					json << "\n";
 				}
 
 				json << "  ],\n";
-				json << "  \"recommendation\": \"std::unordered_map for best performance\",\n";
+				json << "  \"recommendation\": \"" << recommendation << "\",\n";
 				json << "  \"status\": \"success\"\n";
 				json << "}";
 

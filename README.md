@@ -86,15 +86,33 @@ Server will be available at `http://localhost:8080`:
 docker-compose --profile viewer run --rm results_viewer
 ```
 
-### Mode 4: Run Tests Inside Docker (not implemented)
+### Mode 4: Run Unit Tests
+
+Unit tests are built with **Boost.Test** framework and integrated with **CTest**.
 
 ```bash
-# Run tests
-docker-compose run --rm app ./build/tests/run_tests
-
-# Or via bash
+# Run all unit tests
 docker-compose run --rm app bash -c "cd build && ctest --output-on-failure"
+
+# Run specific test suite
+docker-compose run --rm app bash -c "cd build && ctest -R Task1 --verbose"
+docker-compose run --rm app bash -c "cd build && ctest -R Task2 --verbose"
+docker-compose run --rm app bash -c "cd build && ctest -R Task3 --verbose"
+
+# Run with detailed output
+docker-compose run --rm app bash -c "cd build && ctest -V"
+
+# List all available tests
+docker-compose run --rm app bash -c "cd build && ctest -N"
 ```
+
+**Test coverage:**
+| Test Suite | Tests | Description |
+|------------|-------|-------------|
+| Task1Tests | 8 | CustomSharedPtr, CustomWeakPtr, lock(), multi-threading |
+| Task2Tests | 25 | 5 erase methods × 5 scenarios each |
+| Task3Tests | 8 | BenchmarkResult validation, container benchmarks |
+| **Total** | **41** | |
 
 ### Separate Commands
 
@@ -185,6 +203,30 @@ Container comparison:
 - `std::map` — O(log n), ordered
 - `std::unordered_map` — O(1) average, best choice for performance
 - `std::vector<pair>` — O(n), only for small sets (<100 elements)
+
+---
+
+## 🧪 Running Unit Tests (Local Build)
+
+After building the project locally:
+
+```bash
+cd build
+
+# Run all tests
+ctest --output-on-failure
+
+# Run specific test suite
+ctest -R Task1 --verbose    # Task 1: CustomSharedPtr, CustomWeakPtr
+ctest -R Task2 --verbose    # Task 2: Vector erase methods  
+ctest -R Task3 --verbose    # Task 3: Container benchmarks
+
+# Run with full output
+ctest -V
+
+# List all tests without running
+ctest -N
+```
 
 ---
 

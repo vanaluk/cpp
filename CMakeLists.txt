@@ -83,10 +83,19 @@ endif()
 
 # Boost.Asio server
 if(BUILD_ASIO_SERVER)
-    add_executable(asio_server src/asio_server/server.cpp)
+    add_executable(asio_server 
+        src/asio_server/server.cpp
+        src/task1_weak_ptr/custom_weak_ptr.cpp
+        src/task2_vector_erase/vector_erase.cpp
+        src/task3_mapping/container_benchmark.cpp
+        src/benchmark/benchmark_utils.cpp
+    )
     target_link_libraries(asio_server PRIVATE 
         Boost::system
         Threads::Threads
+    )
+    target_include_directories(asio_server PRIVATE 
+        ${CMAKE_SOURCE_DIR}/src
     )
 endif()
 
