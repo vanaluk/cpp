@@ -109,7 +109,7 @@ if(BUILD_PYBIND11)
     )
 endif()
 
-# Boost.Asio server
+# Boost.Asio server (requires exceptions for error handling)
 if(BUILD_ASIO_SERVER)
     add_executable(asio_server 
         src/asio_server/server.cpp
@@ -124,6 +124,10 @@ if(BUILD_ASIO_SERVER)
     )
     target_include_directories(asio_server PRIVATE 
         ${CMAKE_SOURCE_DIR}/src
+    )
+    # Boost.Asio and server error handling require exceptions
+    target_compile_options(asio_server PRIVATE
+        $<$<CONFIG:Release>:-fexceptions>
     )
 endif()
 
