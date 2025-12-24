@@ -412,3 +412,10 @@ export DB_PASSWORD=cpp_interview_pass
 ## License
 
 Project created for demonstration purposes.
+
+## Author
+
+**Ivan Lukianenko**
+
+- 📧 Email: [vanaluk@gmail.com](mailto:vanaluk@gmail.com)
+- 💼 LinkedIn: [linkedin.com/in/ivan-lukianenko-31502894](https://www.linkedin.com/in/ivan-lukianenko-31502894/)
