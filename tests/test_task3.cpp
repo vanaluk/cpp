@@ -78,14 +78,15 @@ BOOST_AUTO_TEST_CASE(test_lookup_time_scales_with_iterations) {
 }
 
 BOOST_AUTO_TEST_CASE(test_vector_lookup_slower_than_map) {
-    const int elements = 10000;
-    const int lookups = 10000;
-    
-    BenchmarkResult map_result = benchmark_map(elements, lookups);
+	const int elements= 50000;
+	const int lookups= 50000;
+
+	BenchmarkResult map_result = benchmark_map(elements, lookups);
     BenchmarkResult vec_result = benchmark_vector(elements, lookups);
-    
-    // Vector O(n) lookup should be slower than map O(log n) lookup
-    BOOST_CHECK_GT(vec_result.lookup_time_ns, map_result.lookup_time_ns);
+
+	// Vector O(n) lookup should be significantly slower than map O(log n) lookup
+	// Use 2x factor to avoid flaky results on CI runners
+	BOOST_CHECK_GT(vec_result.lookup_time_ns, map_result.lookup_time_ns * 2);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
