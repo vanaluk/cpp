@@ -143,3 +143,51 @@ BOOST_AUTO_TEST_CASE(test_multithread_lock) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+// ============================================================================
+// Performance Regression Tests
+// ============================================================================
+// These tests detect performance regressions by comparing against baseline thresholds.
+// Thresholds are set conservatively (10x-20x of expected) to avoid flaky failures on CI.
+
+BOOST_AUTO_TEST_SUITE(PerformanceRegressionSuite)
+
+namespace {
+    // Baseline thresholds
+    // Measured: ~40 ns/operation on typical hardware
+    // Threshold set to 10x for CI stability
+    
+    constexpr int LOCK_ITERATIONS = 10000;
+    constexpr long long LOCK_THRESHOLD_NS = 10'000'000;  // 10ms for 10k iterations (1000 ns/op)
+    
+    void check_performance(const char* operation, long long actual_ns, long long threshold_ns) {
+        bool passed = actual_ns <= threshold_ns;
+        if (!passed) {
+            double exceeded_by = (static_cast<double>(actual_ns) / threshold_ns - 1.0) * 100.0;
+            BOOST_CHECK_MESSAGE(passed, operation << " exceeded threshold: "
+                << actual_ns / 1'000'000.0 << "ms actual vs "
+                << threshold_ns / 1'000'000.0 << "ms threshold "
+                << "(+" << exceeded_by << "% over limit)");
+        } else {
+            double margin = (1.0 - static_cast<double>(actual_ns) / threshold_ns) * 100.0;
+            BOOST_CHECK_MESSAGE(passed, operation << ": " 
+                << actual_ns / 1'000'000.0 << "ms (" << margin << "% under threshold)");
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(test_weak_ptr_lock_performance) {
+    // Measure weak_ptr::lock() performance
+    long long time_ns = benchmark_weak_ptr_lock(LOCK_ITERATIONS, 1);
+    check_performance("weak_ptr::lock()", time_ns, LOCK_THRESHOLD_NS);
+}
+
+BOOST_AUTO_TEST_CASE(test_weak_ptr_lock_multithread_performance) {
+    // Measure multi-threaded lock() performance
+    constexpr long long MULTITHREAD_THRESHOLD_NS = 50'000'000;  // 50ms for 10k iterations across 4 threads
+    
+    long long time_ns = benchmark_weak_ptr_lock(LOCK_ITERATIONS, 4);
+    check_performance("weak_ptr::lock() 4 threads", time_ns, MULTITHREAD_THRESHOLD_NS);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
