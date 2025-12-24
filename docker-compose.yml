@@ -51,6 +51,8 @@ services:
     stop_grace_period: 5s
     # Default - interactive console
     command: python3 python/run.py
+    profiles:
+      - release
 
   # Debug build for development and debugging
   app-debug:

@@ -8,7 +8,7 @@
 cd cpp
 
 # Build Release (default, Ultra Low Latency optimizations)
-docker-compose build app
+docker-compose --profile release build app
 # Or via install script (builds Release by default)
 ./install.sh
 
@@ -25,7 +25,7 @@ docker-compose --profile debug build app-debug
 
 ```bash
 # Release mode (default, ULL optimizations)
-docker-compose run --rm --service-ports app
+docker-compose --profile release run --rm --service-ports app
 
 # Debug mode (with debug symbols, no optimizations)
 docker-compose --profile debug run --rm --service-ports app-debug
@@ -41,34 +41,34 @@ docker-compose exec app python3 python/run.py
 
 ```bash
 # Run all benchmarks automatically
-docker-compose run --rm app python3 python/run.py --autorun
+docker-compose --profile release run --rm app python3 python/run.py --autorun
 
 # View results
-docker-compose run --rm app python3 python/view_results.py
+docker-compose --profile release run --rm app python3 python/view_results.py
 
 # View statistics
-docker-compose run --rm app python3 python/view_results.py --stats
+docker-compose --profile release run --rm app python3 python/view_results.py --stats
 
 # Export results
-docker-compose run --rm app python3 python/view_results.py --export csv
+docker-compose --profile release run --rm app python3 python/view_results.py --export csv
 
 # Run C++ binary directly
-docker-compose run --rm app ./build/CppInterviewDemo
+docker-compose --profile release run --rm app ./build/CppInterviewDemo
 ```
 
 ### 1.4 Run Unit Tests
 
 ```bash
 # Run all unit tests inside Docker
-docker-compose run --rm app bash -c "cd build && ctest --output-on-failure"
+docker-compose --profile release run --rm app bash -c "cd build && ctest --output-on-failure"
 
 # Run specific test suite
-docker-compose run --rm app bash -c "cd build && ctest -R Task1 --verbose"
-docker-compose run --rm app bash -c "cd build && ctest -R Task2 --verbose"
-docker-compose run --rm app bash -c "cd build && ctest -R Task3 --verbose"
+docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task1 --verbose"
+docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task2 --verbose"
+docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task3 --verbose"
 
 # Run tests with detailed output
-docker-compose run --rm app bash -c "cd build && ctest -V"
+docker-compose --profile release run --rm app bash -c "cd build && ctest -V"
 ```
 
 ### 1.5 Stop
@@ -392,10 +392,10 @@ Unit tests are built with **Boost.Test** framework and integrated with **CTest**
 
 ```bash
 # Run all tests
-docker-compose run --rm app bash -c "cd build && ctest --output-on-failure"
+docker-compose --profile release run --rm app bash -c "cd build && ctest --output-on-failure"
 
 # Run specific test
-docker-compose run --rm app bash -c "cd build && ctest -R Task1 --verbose"
+docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task1 --verbose"
 ```
 
 ### 4.2 Local
@@ -430,8 +430,8 @@ ctest -R Task2 --verbose
 
 | Method | Command |
 |--------|---------|
-| Docker (interactive) | `docker-compose run --rm --service-ports app` |
-| Docker (auto) | `docker-compose run --rm app python3 python/run.py --autorun` |
+| Docker (interactive) | `docker-compose --profile release run --rm --service-ports app` |
+| Docker (auto) | `docker-compose --profile release run --rm app python3 python/run.py --autorun` |
 | Local (console) | `python3 python/run.py` |
 | HTTP API | `curl http://localhost:8080/benchmark/task1` |
 
@@ -439,7 +439,7 @@ ctest -R Task2 --verbose
 
 | Method | Command |
 |--------|---------|
-| Docker | `docker-compose run --rm app python3 python/view_results.py` |
+| Docker | `docker-compose --profile release run --rm app python3 python/view_results.py` |
 | Local | `python3 python/view_results.py` |
 | HTTP API | `curl http://localhost:8080/results` |
 | Statistics | `python3 python/view_results.py --stats` |
@@ -452,8 +452,8 @@ ctest -R Task2 --verbose
 
 | Method | Command |
 |--------|---------|
-| Docker (all) | `docker-compose run --rm app bash -c "cd build && ctest --output-on-failure"` |
-| Docker (Task1) | `docker-compose run --rm app bash -c "cd build && ctest -R Task1 --verbose"` |
+| Docker (all) | `docker-compose --profile release run --rm app bash -c "cd build && ctest --output-on-failure"` |
+| Docker (Task1) | `docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task1 --verbose"` |
 | Local (all) | `cd build && ctest --output-on-failure` |
 | Local (verbose) | `cd build && ctest -V` |
 | List tests | `cd build && ctest -N` |
@@ -468,7 +468,7 @@ ctest -R Task2 --verbose
 **Docker Run Commands:**
 | Mode | Command |
 |------|---------|
-| Release | `docker-compose run --rm --service-ports app` |
+| Release | `docker-compose --profile release run --rm --service-ports app` |
 | Debug | `docker-compose --profile debug run --rm --service-ports app-debug` |
 | Release Server | `docker-compose --profile server up` |
 | Debug Server | `docker-compose --profile debug-server up` (port 8081) |
@@ -485,7 +485,7 @@ ctest -R Task2 --verbose
 |--------|---------|
 | Build | `docker-compose build` |
 | Rebuild (no cache) | `docker-compose build --no-cache` |
-| Start interactive console | `docker-compose run --rm app` |
+| Start interactive console | `docker-compose --profile release run --rm app` |
 | Start server | `docker-compose --profile server up` |
 | Stop | `docker-compose down` |
 | Clear data | `docker-compose down -v` |

@@ -81,8 +81,8 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed installation and running instruc
 
 ```bash
 # Docker Release (ULL optimizations)
-docker-compose build app
-docker-compose run --rm --service-ports app
+docker-compose --profile release build app
+docker-compose --profile release run --rm --service-ports app
 
 # Docker Debug (with debug symbols)
 docker-compose --profile debug build app-debug
@@ -103,7 +103,7 @@ cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build-debug -j$(n
 
 ```bash
 # Start PostgreSQL + interactive console
-docker-compose run --rm --service-ports app
+docker-compose --profile release run --rm --service-ports app
 ```
 
 > **Note:** Use `--service-ports` to enable port mapping for menu option `[6] Start Boost.Asio server`.
@@ -138,18 +138,18 @@ Unit tests are built with **Boost.Test** framework and integrated with **CTest**
 
 ```bash
 # Run all unit tests
-docker-compose run --rm app bash -c "cd build && ctest --output-on-failure"
+docker-compose --profile release run --rm app bash -c "cd build && ctest --output-on-failure"
 
 # Run specific test suite
-docker-compose run --rm app bash -c "cd build && ctest -R Task1 --verbose"
-docker-compose run --rm app bash -c "cd build && ctest -R Task2 --verbose"
-docker-compose run --rm app bash -c "cd build && ctest -R Task3 --verbose"
+docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task1 --verbose"
+docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task2 --verbose"
+docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task3 --verbose"
 
 # Run with detailed output
-docker-compose run --rm app bash -c "cd build && ctest -V"
+docker-compose --profile release run --rm app bash -c "cd build && ctest -V"
 
 # List all available tests
-docker-compose run --rm app bash -c "cd build && ctest -N"
+docker-compose --profile release run --rm app bash -c "cd build && ctest -N"
 ```
 
 **Test coverage:**
@@ -167,16 +167,16 @@ docker-compose run --rm app bash -c "cd build && ctest -N"
 docker-compose build
 
 # Run specific task
-docker-compose run --rm app python3 python/run.py
+docker-compose --profile release run --rm app python3 python/run.py
 
 # View results
-docker-compose run --rm app python3 python/view_results.py --stats
+docker-compose --profile release run --rm app python3 python/view_results.py --stats
 
 # Export results to CSV
-docker-compose run --rm app python3 python/view_results.py --export csv
+docker-compose --profile release run --rm app python3 python/view_results.py --export csv
 
 # Run in monitoring mode
-docker-compose run --rm app python3 python/view_results.py --watch
+docker-compose --profile release run --rm app python3 python/view_results.py --watch
 ```
 
 ---
@@ -298,7 +298,7 @@ perf record ./build-local/CppInterviewDemo
 perf report
 
 # Or via Docker
-docker-compose run --rm app perf record ./build/CppInterviewDemo
+docker-compose --profile release run --rm app perf record ./build/CppInterviewDemo
 ```
 
 ---

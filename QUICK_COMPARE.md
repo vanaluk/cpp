@@ -17,7 +17,7 @@ This guide provides commands for comparing performance between Release (ULL-opti
 
 ```bash
 # Build Release image (default, ULL-optimized)
-docker-compose build app
+docker-compose --profile release build app
 docker-compose --profile server build benchmark_server
 ```
 
@@ -33,7 +33,7 @@ docker-compose --profile debug-server build benchmark_server_debug
 
 ```bash
 # Build all images for comparison
-docker-compose build app && \
+docker-compose --profile release build app && \
 docker-compose --profile debug build app-debug && \
 docker-compose --profile server build benchmark_server && \
 docker-compose --profile debug-server build benchmark_server_debug
@@ -47,7 +47,7 @@ docker-compose --profile debug-server build benchmark_server_debug
 
 ```bash
 # Run Release benchmarks (choose tasks 1-3 in menu)
-docker-compose run --rm --service-ports app
+docker-compose --profile release run --rm --service-ports app
 
 # Run Debug benchmarks (choose tasks 1-3 in menu)
 docker-compose --profile debug run --rm --service-ports app-debug
@@ -177,11 +177,11 @@ Complete workflow to compare Release vs Debug performance:
 docker-compose up -d postgres
 
 # Step 2: Build both images
-docker-compose build app
+docker-compose --profile release build app
 docker-compose --profile debug build app-debug
 
 # Step 3: Run Release benchmarks
-docker-compose run --rm app python3 python/run.py --auto --tasks 1,2,3
+docker-compose --profile release run --rm app python3 python/run.py --auto --tasks 1,2,3
 
 # Step 4: Run Debug benchmarks  
 docker-compose --profile debug run --rm app-debug python3 python/run.py --auto --tasks 1,2,3
