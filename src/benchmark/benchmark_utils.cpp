@@ -1,3 +1,2 @@
-#include "benchmark_utils.hpp"
-
-// Implementation of benchmark utilities (if needed)
+// Implementation of benchmark utilities
+// Note: This file is intentionally minimal as most utilities are header-only templates

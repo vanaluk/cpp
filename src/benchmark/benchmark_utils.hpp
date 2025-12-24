@@ -1,11 +1,15 @@
 #pragma once
 
 #include <chrono>
-#include <string>
 
 /**
  * Benchmark utilities
  */
+
+namespace benchmark_constants {
+constexpr double kNanosecondsPerSecond= 1'000'000'000.0;
+constexpr int kDefaultWarmupIterations= 1000;
+} // namespace benchmark_constants
 
 // High resolution timer
 class HighResolutionTimer {
@@ -20,7 +24,7 @@ public:
 	}
 
 	double elapsed_seconds() const {
-		return elapsed_nanoseconds() / 1e9;
+		return static_cast<double>(elapsed_nanoseconds()) / benchmark_constants::kNanosecondsPerSecond;
 	}
 
 private:
@@ -29,7 +33,7 @@ private:
 
 // Warm-up function
 template<typename Func>
-void warmup(Func&& func, int iterations= 1000) {
+void warmup(Func&& func, int iterations= benchmark_constants::kDefaultWarmupIterations) {
 	for(int i= 0; i < iterations; ++i) {
 		func();
 	}
