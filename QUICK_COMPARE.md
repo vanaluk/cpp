@@ -180,11 +180,11 @@ docker-compose up -d postgres
 docker-compose --profile release build app
 docker-compose --profile debug build app-debug
 
-# Step 3: Run Release benchmarks
-docker-compose --profile release run --rm app python3 python/run.py --auto --tasks 1,2,3
+# Step 3: Run Release benchmarks (runs all 3 tasks automatically)
+docker-compose --profile release run --rm app python3 python/run.py --autorun
 
-# Step 4: Run Debug benchmarks  
-docker-compose --profile debug run --rm app-debug python3 python/run.py --auto --tasks 1,2,3
+# Step 4: Run Debug benchmarks (runs all 3 tasks automatically)
+docker-compose --profile debug run --rm app-debug python3 python/run.py --autorun
 
 # Step 5: Compare results
 docker-compose --profile viewer run --rm results_viewer python3 python/view_results.py --compare

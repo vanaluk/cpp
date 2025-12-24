@@ -108,9 +108,9 @@ See [QUICK_COMPARE.md](QUICK_COMPARE.md) for detailed performance comparison bet
 docker-compose --profile release build app
 docker-compose --profile debug build app-debug
 
-# Run benchmarks on both builds
-docker-compose --profile release run --rm app python3 python/run.py --auto --tasks 1,2,3
-docker-compose --profile debug run --rm app-debug python3 python/run.py --auto --tasks 1,2,3
+# Run benchmarks on both builds (runs all 3 tasks automatically)
+docker-compose --profile release run --rm app python3 python/run.py --autorun
+docker-compose --profile debug run --rm app-debug python3 python/run.py --autorun
 
 # Compare results (shows speedup factor)
 docker-compose --profile viewer run --rm results_viewer python3 python/view_results.py --compare
