@@ -75,7 +75,7 @@ cpp/
 
 ## 🚀 Quick Start
 
-See [QUICKSTART.md](QUICKSTART.md) for detailed installation and running instructions.
+See [QUICK_START.md](QUICK_START.md) for detailed installation and running instructions.
 
 ### Build Commands Summary
 
@@ -93,6 +93,27 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j$(nproc)
 
 # Local Debug build (for development)
 cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build-debug -j$(nproc)
+```
+
+---
+
+## 📊 Quick Compare: Release vs Debug
+
+See [QUICK_COMPARE.md](QUICK_COMPARE.md) for detailed performance comparison between Release and Debug builds.
+
+### Compare Commands Summary
+
+```bash
+# Build both images
+docker-compose --profile release build app
+docker-compose --profile debug build app-debug
+
+# Run benchmarks on both builds
+docker-compose --profile release run --rm app python3 python/run.py --auto --tasks 1,2,3
+docker-compose --profile debug run --rm app-debug python3 python/run.py --auto --tasks 1,2,3
+
+# Compare results (shows speedup factor)
+docker-compose --profile viewer run --rm results_viewer python3 python/view_results.py --compare
 ```
 
 ---
