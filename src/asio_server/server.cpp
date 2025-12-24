@@ -109,15 +109,44 @@ private:
 			return default_value;
 		}
 
+		// Get positive integer parameter (returns 0 for invalid/negative values)
+		size_t get_param_size(const std::map<std::string, std::string>& params,
+			const std::string& key, size_t default_value, size_t max_value= 100000000) {
+			auto it= params.find(key);
+			if(it != params.end()) {
+				try {
+					long long val= std::stoll(it->second);
+					if(val <= 0) {
+						return 0; // Invalid: non-positive
+					}
+					if(static_cast<unsigned long long>(val) > max_value) {
+						return 0; // Invalid: exceeds max
+					}
+					return static_cast<size_t>(val);
+				} catch(...) {
+					return 0; // Invalid: parse error
+				}
+			}
+			return default_value;
+		}
+
 		std::string json_response(int code, const std::string& body) {
 			std::stringstream ss;
-			ss << "HTTP/1.1 " << code << " OK\r\n";
+			std::string status_text= (code == 200) ? "OK" : (code == 400) ? "Bad Request"
+																		  : "Error";
+			ss << "HTTP/1.1 " << code << " " << status_text << "\r\n";
 			ss << "Content-Type: application/json\r\n";
 			ss << "Access-Control-Allow-Origin: *\r\n";
 			ss << "Content-Length: " << body.length() << "\r\n";
 			ss << "\r\n";
 			ss << body;
 			return ss.str();
+		}
+
+		std::string json_error(int code, const std::string& message) {
+			std::stringstream json;
+			json << "{\"error\": \"" << message << "\", \"status\": \"error\"}";
+			return json_response(code, json.str());
 		}
 
 		std::string process_request(const std::string& request) {
@@ -136,11 +165,18 @@ private:
 
 			// GET /benchmark/task1
 			if(url.find("/benchmark/task1") == 0) {
-				int iterations= get_param_int(params, "iterations", 1000000);
-				int threads= get_param_int(params, "threads", 1);
+				size_t iterations= get_param_size(params, "iterations", 1000000, 100000000);
+				size_t threads= get_param_size(params, "threads", 1, 64);
+
+				if(iterations == 0) {
+					return json_error(400, "Invalid 'iterations' parameter: must be positive integer <= 100000000");
+				}
+				if(threads == 0) {
+					return json_error(400, "Invalid 'threads' parameter: must be positive integer <= 64");
+				}
 
 				// Call real C++ benchmark function
-				long long duration= benchmark_weak_ptr_lock(iterations, threads);
+				long long duration= benchmark_weak_ptr_lock(static_cast<int>(iterations), static_cast<int>(threads));
 				double ops_per_sec= static_cast<double>(iterations) / (duration / 1e9);
 
 				std::stringstream json;
@@ -160,17 +196,27 @@ private:
 
 			// GET /benchmark/task2
 			if(url.find("/benchmark/task2") == 0) {
-				int size= get_param_int(params, "size", 100000);
-				int iterations= get_param_int(params, "iterations", 100);
-				int threads= get_param_int(params, "threads", 1);
+				size_t size= get_param_size(params, "size", 100000, 10000000);
+				size_t iterations= get_param_size(params, "iterations", 100, 10000);
+				size_t threads= get_param_size(params, "threads", 1, 64);
+
+				if(size == 0) {
+					return json_error(400, "Invalid 'size' parameter: must be positive integer <= 10000000");
+				}
+				if(iterations == 0) {
+					return json_error(400, "Invalid 'iterations' parameter: must be positive integer <= 10000");
+				}
+				if(threads == 0) {
+					return json_error(400, "Invalid 'threads' parameter: must be positive integer <= 64");
+				}
 
 				// Call real benchmarks for each method
 				std::vector<std::pair<std::string, long long>> methods= {
-					{"naive_erase", benchmark_vector_erase(erase_every_second_naive<int>, "naive", size, iterations, threads)},
-					{"remove_if_erase", benchmark_vector_erase(erase_every_second_remove_if<int>, "remove_if", size, iterations, threads)},
-					{"iterators_erase", benchmark_vector_erase(erase_every_second_iterators<int>, "iterators", size, iterations, threads)},
-					{"copy_erase", benchmark_vector_erase(erase_every_second_copy<int>, "copy", size, iterations, threads)},
-					{"partition_erase", benchmark_vector_erase(erase_every_second_partition<int>, "partition", size, iterations, threads)}};
+					{"naive_erase", benchmark_vector_erase(erase_every_second_naive<int>, "naive", size, static_cast<int>(iterations), static_cast<int>(threads))},
+					{"remove_if_erase", benchmark_vector_erase(erase_every_second_remove_if<int>, "remove_if", size, static_cast<int>(iterations), static_cast<int>(threads))},
+					{"iterators_erase", benchmark_vector_erase(erase_every_second_iterators<int>, "iterators", size, static_cast<int>(iterations), static_cast<int>(threads))},
+					{"copy_erase", benchmark_vector_erase(erase_every_second_copy<int>, "copy", size, static_cast<int>(iterations), static_cast<int>(threads))},
+					{"partition_erase", benchmark_vector_erase(erase_every_second_partition<int>, "partition", size, static_cast<int>(iterations), static_cast<int>(threads))}};
 
 				std::stringstream json;
 				json << "{\n";
@@ -200,13 +246,20 @@ private:
 
 			// GET /benchmark/task3
 			if(url.find("/benchmark/task3") == 0) {
-				int size= get_param_int(params, "size", 100000);
-				int lookups= get_param_int(params, "lookups", 1000000);
+				size_t size= get_param_size(params, "size", 100000, 10000000);
+				size_t lookups= get_param_size(params, "lookups", 1000000, 100000000);
+
+				if(size == 0) {
+					return json_error(400, "Invalid 'size' parameter: must be positive integer <= 10000000");
+				}
+				if(lookups == 0) {
+					return json_error(400, "Invalid 'lookups' parameter: must be positive integer <= 100000000");
+				}
 
 				// Call real benchmarks for each container
-				BenchmarkResult map_result= benchmark_map(size, lookups);
-				BenchmarkResult umap_result= benchmark_unordered_map(size, lookups);
-				BenchmarkResult vec_result= benchmark_vector(size, lookups);
+				BenchmarkResult map_result= benchmark_map(static_cast<int>(size), static_cast<int>(lookups));
+				BenchmarkResult umap_result= benchmark_unordered_map(static_cast<int>(size), static_cast<int>(lookups));
+				BenchmarkResult vec_result= benchmark_vector(static_cast<int>(size), static_cast<int>(lookups));
 
 				// Helper to get complexity string
 				auto get_complexity= [](const std::string& name) -> std::string {
