@@ -47,3 +47,4 @@ test_report*
 docs/
 cpp.code-workspace
 compile_commands.json
+.env

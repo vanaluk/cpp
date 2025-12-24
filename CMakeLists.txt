@@ -44,6 +44,23 @@ set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -flto -fus
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(Threads REQUIRED)
 
+# PostgreSQL client library (libpq)
+find_package(PostgreSQL QUIET)
+if(NOT PostgreSQL_FOUND)
+    # Fallback: find libpq manually
+    find_library(LIBPQ_LIBRARY NAMES pq libpq)
+    find_path(LIBPQ_INCLUDE_DIR libpq-fe.h
+        PATHS /usr/include /usr/local/include /usr/include/postgresql)
+    if(LIBPQ_LIBRARY AND LIBPQ_INCLUDE_DIR)
+        set(PostgreSQL_FOUND TRUE)
+        set(PostgreSQL_LIBRARIES ${LIBPQ_LIBRARY})
+        set(PostgreSQL_INCLUDE_DIRS ${LIBPQ_INCLUDE_DIR})
+        message(STATUS "Found libpq: ${LIBPQ_LIBRARY}")
+    else()
+        message(WARNING "libpq not found - asio_server will not have PostgreSQL support")
+    endif()
+endif()
+
 # Pybind11 (optional)
 if(BUILD_PYBIND11)
     # Find Python 3.8+ explicitly to avoid using old Python versions
@@ -129,6 +146,12 @@ if(BUILD_ASIO_SERVER)
     target_compile_options(asio_server PRIVATE
         $<$<CONFIG:Release>:-fexceptions>
     )
+    # Link PostgreSQL if available
+    if(PostgreSQL_FOUND)
+        target_link_libraries(asio_server PRIVATE ${PostgreSQL_LIBRARIES})
+        target_include_directories(asio_server PRIVATE ${PostgreSQL_INCLUDE_DIRS})
+        target_compile_definitions(asio_server PRIVATE HAS_POSTGRESQL=1)
+    endif()
 endif()
 
 # Tests

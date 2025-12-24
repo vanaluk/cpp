@@ -4,13 +4,12 @@
 #include <thread>
 #include <vector>
 #include <sstream>
-#include <chrono>
 #include <cstdlib>
 #include <map>
-#include <regex>
 #include "task1_weak_ptr/custom_weak_ptr.hpp"
 #include "task2_vector_erase/vector_erase.hpp"
 #include "task3_mapping/container_benchmark.hpp"
+#include "db/postgres_client.hpp"
 
 using boost::asio::ip::tcp;
 
@@ -186,6 +185,12 @@ private:
 				long long duration= benchmark_weak_ptr_lock(static_cast<int>(iterations), static_cast<int>(threads));
 				double ops_per_sec= safe_ops_per_sec(static_cast<double>(iterations), duration);
 
+				// Save to database
+				bool saved= get_db_client().save_result(
+					1, "weak_ptr::lock()", "CustomWeakPtr::lock()",
+					duration, ops_per_sec, static_cast<int>(threads),
+					get_build_type());
+
 				std::stringstream json;
 				json << "{\n";
 				json << "  \"task\": 1,\n";
@@ -195,6 +200,7 @@ private:
 				json << "  \"threads\": " << threads << ",\n";
 				json << "  \"execution_time_ns\": " << duration << ",\n";
 				json << "  \"operations_per_second\": " << std::fixed << ops_per_sec << ",\n";
+				json << "  \"saved_to_db\": " << (saved ? "true" : "false") << ",\n";
 				json << "  \"status\": \"success\"\n";
 				json << "}";
 
@@ -225,6 +231,17 @@ private:
 					{"copy_erase", benchmark_vector_erase(erase_every_second_copy<int>, "copy", size, static_cast<int>(iterations), static_cast<int>(threads))},
 					{"partition_erase", benchmark_vector_erase(erase_every_second_partition<int>, "partition", size, static_cast<int>(iterations), static_cast<int>(threads))}};
 
+				// Save each method result to database
+				std::string build_type= get_build_type();
+				int saved_count= 0;
+				for(const auto& m: methods) {
+					double ops= safe_ops_per_sec(static_cast<double>(iterations), m.second);
+					if(get_db_client().save_result(2, "Vector erase", m.first, m.second, ops,
+						   static_cast<int>(threads), build_type)) {
+						++saved_count;
+					}
+				}
+
 				std::stringstream json;
 				json << "{\n";
 				json << "  \"task\": 2,\n";
@@ -245,6 +262,7 @@ private:
 				}
 
 				json << "  ],\n";
+				json << "  \"saved_to_db\": " << saved_count << ",\n";
 				json << "  \"status\": \"success\"\n";
 				json << "}";
 
@@ -267,6 +285,20 @@ private:
 				BenchmarkResult map_result= benchmark_map(static_cast<int>(size), static_cast<int>(lookups));
 				BenchmarkResult umap_result= benchmark_unordered_map(static_cast<int>(size), static_cast<int>(lookups));
 				BenchmarkResult vec_result= benchmark_vector(static_cast<int>(size), static_cast<int>(lookups));
+
+				// Save each container result to database
+				std::string build_type= get_build_type();
+				int saved_count= 0;
+				auto save_container_result= [&](const BenchmarkResult& r) {
+					double ops= safe_ops_per_sec(static_cast<double>(lookups), r.lookup_time_ns);
+					if(get_db_client().save_result(3, "Mapping benchmark", r.container_name,
+						   r.lookup_time_ns, ops, 1, build_type)) {
+						++saved_count;
+					}
+				};
+				save_container_result(map_result);
+				save_container_result(umap_result);
+				save_container_result(vec_result);
 
 				// Helper to get complexity string
 				auto get_complexity= [](const std::string& name) -> std::string {
@@ -316,6 +348,7 @@ private:
 
 				json << "  ],\n";
 				json << "  \"recommendation\": \"" << recommendation << "\",\n";
+				json << "  \"saved_to_db\": " << saved_count << ",\n";
 				json << "  \"status\": \"success\"\n";
 				json << "}";
 
@@ -324,15 +357,11 @@ private:
 
 			// GET /results
 			if(url.find("/results") == 0) {
-				// TODO: Query PostgreSQL for results here
-				std::stringstream json;
-				json << "{\n";
-				json << "  \"results\": [],\n";
-				json << "  \"total\": 0,\n";
-				json << "  \"note\": \"Connect to PostgreSQL to see real results\"\n";
-				json << "}";
+				int limit= get_param_int(params, "limit", 100);
+				int task= get_param_int(params, "task", 0);
 
-				return json_response(200, json.str());
+				std::string results_json= get_db_client().get_results_json(limit, task);
+				return json_response(200, results_json);
 			}
 
 			// 404 Not Found
