@@ -2,14 +2,12 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "build-debug",
             "type": "shell",
             "command": "cmake",
             "args": [
                 "--build",
-                "${workspaceFolder}/build",
-                "--config",
-                "Debug",
+                "${workspaceFolder}/build-debug",
                 "-j",
                 "$(nproc)"
             ],
@@ -23,10 +21,50 @@
             "presentation": {
                 "reveal": "always",
                 "panel": "dedicated"
+            },
+            "dependsOn": "configure-debug"
+        },
+        {
+            "label": "configure-debug",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-S",
+                "${workspaceFolder}",
+                "-B",
+                "${workspaceFolder}/build-debug",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
             }
         },
         {
-            "label": "configure",
+            "label": "build-release",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "${workspaceFolder}/build",
+                "-j",
+                "$(nproc)"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "dependsOn": "configure-release"
+        },
+        {
+            "label": "configure-release",
             "type": "shell",
             "command": "cmake",
             "args": [
@@ -34,17 +72,31 @@
                 "${workspaceFolder}",
                 "-B",
                 "${workspaceFolder}/build",
-                "-DCMAKE_BUILD_TYPE=Debug"
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
             ],
             "group": "build",
             "problemMatcher": [],
             "presentation": {
-                "reveal": "always",
+                "reveal": "silent",
                 "panel": "dedicated"
             }
         },
         {
-            "label": "clean",
+            "label": "clean-debug",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "${workspaceFolder}/build-debug",
+                "--target",
+                "clean"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "clean-release",
             "type": "shell",
             "command": "cmake",
             "args": [

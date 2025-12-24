@@ -5,6 +5,48 @@
             "name": "C++ Debug",
             "type": "cppdbg",
             "request": "launch",
+            "program": "${workspaceFolder}/build-debug/CppInterviewDemo",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build-debug",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "C++ Debug (Asio Server)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build-debug/asio_server",
+            "args": ["8080"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build-debug",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "C++ Release (no debug)",
+            "type": "cppdbg",
+            "request": "launch",
             "program": "${workspaceFolder}/build/CppInterviewDemo",
             "args": [],
             "stopAtEntry": false,
@@ -19,28 +61,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build",
-            "miDebuggerPath": "/usr/bin/gdb"
-        },
-        {
-            "name": "C++ Debug (Asio Server)",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/asio_server",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "preLaunchTask": "build",
+            "preLaunchTask": "build-release",
             "miDebuggerPath": "/usr/bin/gdb"
         }
     ]
