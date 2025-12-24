@@ -115,17 +115,17 @@ docker-compose --profile server --profile debug-server down
 docker-compose --profile viewer run --rm results_viewer
 
 # Show only Release results
-docker-compose --profile viewer run --rm results_viewer -- --build release
+docker-compose --profile viewer run --rm results_viewer python3 python/view_results.py --build Release
 
 # Show only Debug results
-docker-compose --profile viewer run --rm results_viewer -- --build debug
+docker-compose --profile viewer run --rm results_viewer python3 python/view_results.py --build Debug
 ```
 
 ### Compare Release vs Debug Performance
 
 ```bash
 # Show side-by-side comparison with speedup factor
-docker-compose --profile viewer run --rm results_viewer -- --compare
+docker-compose --profile viewer run --rm results_viewer python3 python/view_results.py --compare
 ```
 
 **Output example:**
@@ -151,19 +151,19 @@ Task | Method              | Debug (ns)    | Release (ns)  | Speedup
 
 ```bash
 # Compare specific task only
-docker-compose --profile viewer run --rm results_viewer -- --compare --task 1
-docker-compose --profile viewer run --rm results_viewer -- --compare --task 2
-docker-compose --profile viewer run --rm results_viewer -- --compare --task 3
+docker-compose --profile viewer run --rm results_viewer python3 python/view_results.py --compare --task 1
+docker-compose --profile viewer run --rm results_viewer python3 python/view_results.py --compare --task 2
+docker-compose --profile viewer run --rm results_viewer python3 python/view_results.py --compare --task 3
 ```
 
 ### Export Results
 
 ```bash
 # Export to CSV for external analysis
-docker-compose --profile viewer run --rm results_viewer -- --export csv > results.csv
+docker-compose --profile viewer run --rm results_viewer python3 python/view_results.py --export csv > results.csv
 
 # Export to JSON
-docker-compose --profile viewer run --rm results_viewer -- --export json > results.json
+docker-compose --profile viewer run --rm results_viewer python3 python/view_results.py --export json > results.json
 ```
 
 ---
@@ -187,7 +187,7 @@ docker-compose --profile release run --rm app python3 python/run.py --auto --tas
 docker-compose --profile debug run --rm app-debug python3 python/run.py --auto --tasks 1,2,3
 
 # Step 5: Compare results
-docker-compose --profile viewer run --rm results_viewer -- --compare
+docker-compose --profile viewer run --rm results_viewer python3 python/view_results.py --compare
 
 # Step 6: Cleanup
 docker-compose down

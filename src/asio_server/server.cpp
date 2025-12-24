@@ -1,7 +1,6 @@
 #include <boost/asio.hpp>
 #include <iostream>
 #include <string>
-#include <thread>
 #include <vector>
 #include <sstream>
 #include <cstdlib>

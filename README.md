@@ -291,8 +291,8 @@ ctest -N
 # Record profile (Release build)
 perf record ./build/CppInterviewDemo
 
-# Record profile (Debug/local build)
-perf record ./build-local/CppInterviewDemo
+# Record profile (Debug build)
+perf record ./build-debug/CppInterviewDemo
 
 # Analyze
 perf report

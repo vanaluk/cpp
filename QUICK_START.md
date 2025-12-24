@@ -264,7 +264,7 @@ docker-compose --profile server up
 ./build/asio_server 8080
 
 # Or locally (Debug build)
-./build-local/asio_server 8080
+./build-debug/asio_server 8080
 ```
 
 ### 3.2 Available Endpoints
