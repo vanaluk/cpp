@@ -60,6 +60,13 @@ docker-compose --profile debug run --rm --service-ports app-debug
 
 ### Option B: Using REST API Server
 
+**Server URLs by build type:**
+
+| Build | URL | Port |
+|-------|-----|------|
+| **Release** | `http://localhost:8080` | 8080 |
+| **Debug** | `http://localhost:8081` | 8081 |
+
 #### Start Release Server (port 8080)
 
 ```bash

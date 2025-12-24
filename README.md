@@ -136,11 +136,20 @@ This will start:
 ### Mode 2: REST API Server for Benchmarks
 
 ```bash
-# Start PostgreSQL + Boost.Asio HTTP server
+# Start PostgreSQL + Boost.Asio HTTP server (Release)
 docker-compose --profile server up
+
+# Start Debug server (port 8081)
+docker-compose --profile debug-server up
 ```
 
-Server will be available at `http://localhost:8080`:
+**Server endpoints:**
+| Build | URL | Port |
+|-------|-----|------|
+| **Release** | `http://localhost:8080` | 8080 |
+| **Debug** | `http://localhost:8081` | 8081 |
+
+Available endpoints:
 - `GET /benchmark/task1` — task 1 benchmark
 - `GET /benchmark/task2?size=100000` — task 2 benchmark
 - `GET /benchmark/task3?size=100000` — task 3 benchmark

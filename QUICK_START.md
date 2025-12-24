@@ -261,15 +261,25 @@ python3 python/view_results.py --limit 10
 ### 3.1 Start Server
 
 ```bash
-# Via Docker (recommended)
+# Via Docker - Release server (port 8080)
 docker-compose --profile server up
+
+# Via Docker - Debug server (port 8081)
+docker-compose --profile debug-server up
 
 # Or locally (Release build)
 ./build/asio_server 8080
 
 # Or locally (Debug build)
-./build-debug/asio_server 8080
+./build-debug/asio_server 8081
 ```
+
+**Server URLs by build type:**
+
+| Build | URL | Port |
+|-------|-----|------|
+| **Release** | `http://localhost:8080` | 8080 |
+| **Debug** | `http://localhost:8081` | 8081 |
 
 ### 3.2 Available Endpoints
 
@@ -284,8 +294,11 @@ docker-compose --profile server up
 ### 3.3 Request Examples
 
 ```bash
-# Task 1 benchmark
+# Task 1 benchmark (Release server)
 curl http://localhost:8080/benchmark/task1
+
+# Task 1 benchmark (Debug server)
+curl http://localhost:8081/benchmark/task1
 
 # Task 2 benchmark with parameters
 curl "http://localhost:8080/benchmark/task2?size=100000&iterations=100"
