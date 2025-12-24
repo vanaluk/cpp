@@ -221,17 +221,19 @@ python3 python/view_results.py
 # Task 1 only
 python3 python/view_results.py --task 1
 
-# Task 2 only
-python3 python/view_results.py --task 2
-
-# Task 3 only
-python3 python/view_results.py --task 3
+# Filter by build type
+python3 python/view_results.py --build Release
+python3 python/view_results.py --build Debug
 
 # Statistics by methods
 python3 python/view_results.py --stats
 
-# Statistics for task 2 only
-python3 python/view_results.py --stats --task 2
+# Statistics for Release builds only
+python3 python/view_results.py --stats --build Release
+
+# Compare Release vs Debug performance (shows speedup)
+python3 python/view_results.py --compare
+python3 python/view_results.py --compare --task 2
 
 # Export to CSV
 python3 python/view_results.py --export csv
@@ -436,6 +438,8 @@ ctest -R Task2 --verbose
 | Local | `python3 python/view_results.py` |
 | HTTP API | `curl http://localhost:8080/results` |
 | Statistics | `python3 python/view_results.py --stats` |
+| Compare Release/Debug | `python3 python/view_results.py --compare` |
+| Filter by build | `python3 python/view_results.py --build Release` |
 | Export CSV | `python3 python/view_results.py --export csv` |
 | Monitoring | `python3 python/view_results.py --watch` |
 
