@@ -181,13 +181,21 @@ echo ""
 echo "Building project..."
 mkdir -p build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cmake --build . -j$(nproc)
 cd ..
+
+# Create symlink for compile_commands.json (for clangd/IDE support)
+if [ -f build/compile_commands.json ]; then
+    ln -sf build/compile_commands.json compile_commands.json
+    echo -e "${GREEN}✓${NC} Created symlink for compile_commands.json (IDE support)"
+fi
 
 echo ""
 echo -e "${GREEN}✓ Installation completed successfully!${NC}"
 echo ""
 echo "To run the project use:"
 echo "  python3 python/run.py"
+echo ""
+echo "For IDE support (clangd), compile_commands.json is available in project root."
 echo ""

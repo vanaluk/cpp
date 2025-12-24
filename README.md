@@ -299,10 +299,27 @@ ctest -N
 
 ## 🔧 Development in VS Code
 
+### IDE Setup (clangd support)
+
+The project uses `compile_commands.json` for IDE features (code completion, go-to-definition, linting). After building:
+
+```bash
+# Option 1: Create symlink in project root (recommended)
+ln -sf build/compile_commands.json compile_commands.json
+
+# Option 2: Configure .clangd to point to build directory (already done)
+# See .clangd file: CompilationDatabase: build
+```
+
+### VS Code
+
 1. Open project in VS Code
-2. Install extensions: C/C++, CMake Tools
-3. `Ctrl+Shift+P` → "CMake: Configure"
-4. `F5` for debugging
+2. Install extensions: clangd
+3. Build the project first: `cmake -B build && cmake --build build`
+4. Restart clangd: `Ctrl+Shift+P` → "clangd: Restart language server"
+5. `F5` for debugging
+
+> **Note:** If clangd shows "file not found" errors, ensure `compile_commands.json` exists in `build/` directory and restart the language server.
 
 ---
 
