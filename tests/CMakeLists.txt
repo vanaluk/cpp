@@ -28,7 +28,7 @@ target_include_directories(test_task1 PRIVATE
     ${CMAKE_SOURCE_DIR}/src
 )
 # Boost.Test requires exceptions and RTTI - override ULL flags in Release
-target_compile_options(test_task1 PRIVATE 
+target_compile_options(test_task1 PRIVATE
     $<$<CONFIG:Release>:-fexceptions -frtti>
 )
 add_test(NAME Task1Tests COMMAND test_task1 --log_level=test_suite)

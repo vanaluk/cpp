@@ -321,8 +321,8 @@ BOOST_AUTO_TEST_CASE(test_on_methods_faster_than_on2) {
 	// (theoretically n/2 = 500x, but CI variance requires conservative threshold)
 	BOOST_CHECK_MESSAGE(naive_time > copy_time * kSpeedupFactor,
 		"O(n) copy method should be at least " << kSpeedupFactor << "x faster than O(n²) naive method: "
-			<< "naive=" << static_cast<double>(naive_time) / kNsToMs << "ms, "
-			<< "copy=" << static_cast<double>(copy_time) / kNsToMs << "ms");
+											   << "naive=" << static_cast<double>(naive_time) / kNsToMs << "ms, "
+											   << "copy=" << static_cast<double>(copy_time) / kNsToMs << "ms");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
