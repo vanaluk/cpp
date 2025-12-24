@@ -260,8 +260,11 @@ python3 python/view_results.py --limit 10
 # Via Docker (recommended)
 docker-compose --profile server up
 
-# Or locally
+# Or locally (Release build)
 ./build/asio_server 8080
+
+# Or locally (Debug build)
+./build-local/asio_server 8080
 ```
 
 ### 3.2 Available Endpoints

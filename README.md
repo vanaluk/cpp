@@ -288,8 +288,11 @@ ctest -N
 ## 📈 Profiling with perf
 
 ```bash
-# Record profile
+# Record profile (Release build)
 perf record ./build/CppInterviewDemo
+
+# Record profile (Debug/local build)
+perf record ./build-local/CppInterviewDemo
 
 # Analyze
 perf report
