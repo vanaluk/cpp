@@ -201,8 +201,8 @@ class InterviewDemoConsole:
             # Display results
             execution_time_ms = execution_time_ns / 1e6
             operations_per_second = iterations / (execution_time_ns / 1e9)
-            
-            print(f"\nResults:")
+
+            print("\nResults:")
             print(f"  Execution time: {execution_time_ms:.2f} ms")
             print(f"  Operations per second: {operations_per_second:,.0f}")
             
