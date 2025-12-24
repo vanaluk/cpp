@@ -17,7 +17,28 @@ option(BUILD_ASIO_SERVER "Build Boost.Asio server" ON)
 # Compilation flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
+
+# Ultra low latency Release flags
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -march=native")           # CPU-specific optimizations
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -mtune=native")           # Tune for current CPU
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -flto")                   # Link-time optimization
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -ffast-math")             # Aggressive FP optimizations
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -funroll-loops")          # Unroll loops
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -fomit-frame-pointer")    # Free up register
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -fno-exceptions")         # Disable exceptions (ULL critical)
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -fno-rtti")               # Disable RTTI
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -fvisibility=hidden")     # Hide symbols by default
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -fvisibility-inlines-hidden")
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -fno-stack-protector")    # Disable stack protection
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -fno-plt")                # Direct function calls
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -fprefetch-loop-arrays")  # Prefetch hints
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -falign-functions=32")    # Cache-line alignment
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -falign-loops=32")
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -DNDEBUG")                # Disable assertions
+
+# LTO for linker
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -flto -fuse-linker-plugin")
 
 # Find dependencies
 find_package(Boost REQUIRED COMPONENTS system)
@@ -65,7 +86,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Threads::Threads
 )
 
-# Pybind11 module
+# Pybind11 module (requires exceptions and RTTI, override ULL flags)
 if(BUILD_PYBIND11)
     pybind11_add_module(cpp_interview_bindings
         src/bindings/bindings.cpp
@@ -77,6 +98,10 @@ if(BUILD_PYBIND11)
     target_link_libraries(cpp_interview_bindings PRIVATE 
         Boost::system
         Threads::Threads
+    )
+    # pybind11 requires exceptions and RTTI - override ULL flags
+    target_compile_options(cpp_interview_bindings PRIVATE
+        $<$<CONFIG:Release>:-fexceptions -frtti>
     )
     set_target_properties(cpp_interview_bindings PROPERTIES
         CXX_VISIBILITY_PRESET "hidden"

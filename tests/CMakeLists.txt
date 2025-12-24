@@ -13,6 +13,12 @@ endif()
 # Required for dynamic linking with Boost.Test shared library
 add_compile_definitions(BOOST_TEST_DYN_LINK)
 
+# Boost.Test requires exceptions and RTTI - override ULL flags for tests
+set(TEST_OVERRIDE_FLAGS "")
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(TEST_OVERRIDE_FLAGS "-fexceptions" "-frtti")
+endif()
+
 # ============================================================
 # Test for Task 1: CustomSharedPtr, CustomWeakPtr, lock()
 # ============================================================
@@ -27,6 +33,7 @@ target_link_libraries(test_task1 PRIVATE
 target_include_directories(test_task1 PRIVATE 
     ${CMAKE_SOURCE_DIR}/src
 )
+target_compile_options(test_task1 PRIVATE ${TEST_OVERRIDE_FLAGS})
 add_test(NAME Task1Tests COMMAND test_task1 --log_level=test_suite)
 
 # ============================================================
@@ -44,6 +51,7 @@ target_link_libraries(test_task2 PRIVATE
 target_include_directories(test_task2 PRIVATE 
     ${CMAKE_SOURCE_DIR}/src
 )
+target_compile_options(test_task2 PRIVATE ${TEST_OVERRIDE_FLAGS})
 add_test(NAME Task2Tests COMMAND test_task2 --log_level=test_suite)
 
 # ============================================================
@@ -61,4 +69,5 @@ target_link_libraries(test_task3 PRIVATE
 target_include_directories(test_task3 PRIVATE 
     ${CMAKE_SOURCE_DIR}/src
 )
+target_compile_options(test_task3 PRIVATE ${TEST_OVERRIDE_FLAGS})
 add_test(NAME Task3Tests COMMAND test_task3 --log_level=test_suite)
