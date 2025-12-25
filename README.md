@@ -11,7 +11,7 @@ A demonstration project for preparing for a C++ Developer interview. The project
 
 | Technology | Purpose |
 |------------|---------|
-| **C++17/20** | Main implementation language |
+| **C++17** | Main implementation language |
 | **pybind11** | C++ and Python integration (calling C++ functions from Python) |
 | **Boost.Asio** | Asynchronous HTTP server for REST API benchmarks |
 | **PostgreSQL** | Storage of benchmark results |
