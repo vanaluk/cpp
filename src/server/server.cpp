@@ -5,9 +5,9 @@
 #include <sstream>
 #include <cstdlib>
 #include <map>
-#include "task1_weak_ptr/custom_weak_ptr.hpp"
-#include "task2_vector_erase/vector_erase.hpp"
-#include "task3_mapping/container_benchmark.hpp"
+#include "examples/weak_ptr/custom_weak_ptr.hpp"
+#include "examples/vector_erase/vector_erase.hpp"
+#include "examples/container_lookup/container_benchmark.hpp"
 #include "db/postgres_client.hpp"
 
 using boost::asio::ip::tcp;
@@ -46,7 +46,7 @@ constexpr int kDefaultResultsLimit= 100;
 } // namespace benchmark_limits
 
 /**
- * Boost.Asio HTTP server for benchmarks
+ * C++ Benchmark Kit - REST API Server (Boost.Asio)
  *
  * Endpoints:
  *   GET /benchmark/task1              - Benchmark weak_ptr::lock()
@@ -208,7 +208,7 @@ private:
 
 			// GET /health
 			if(url.find("/health") == 0) {
-				return json_response(http_status::kOk, R"({"status": "ok", "server": "Boost.Asio C++ Interview Demo"})");
+				return json_response(http_status::kOk, R"({"status": "ok", "server": "C++ Benchmark Kit REST API"})");
 			}
 
 			// GET /benchmark/task1
@@ -428,7 +428,7 @@ private:
 
 void print_usage(const char* program_name) {
 	std::cout << "Usage: " << program_name << " [port]\n\n";
-	std::cout << "Boost.Asio HTTP server for C++ Interview Demo benchmarks\n\n";
+	std::cout << "C++ Benchmark Kit - REST API Server\n\n";
 	std::cout << "Endpoints:\n";
 	std::cout << "  GET /health                      - Health check\n";
 	std::cout << "  GET /benchmark/task1             - Benchmark weak_ptr::lock()\n";
@@ -464,7 +464,7 @@ int main(int argc, char* argv[]) {
 		HttpServer server(io_context, port);
 
 		std::cout << "╔══════════════════════════════════════════════════════════╗\n";
-		std::cout << "║   C++ Interview Demo - Boost.Asio HTTP Server            ║\n";
+		std::cout << "║   C++ Benchmark Kit - REST API Server                    ║\n";
 		std::cout << "╠══════════════════════════════════════════════════════════╣\n";
 		std::cout << "║   Port: " << port << "                                              ║\n";
 		std::cout << "╠══════════════════════════════════════════════════════════╣\n";

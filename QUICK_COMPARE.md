@@ -76,7 +76,7 @@ docker-compose --profile server up -d benchmark_server
 # Run benchmarks via API
 curl "http://localhost:8080/benchmark/task1?iterations=1000"
 curl "http://localhost:8080/benchmark/task2?size=10000&iterations=100"
-curl "http://localhost:8080/benchmark/task3?elements=10000&lookups=100000"
+curl "http://localhost:8080/benchmark/task3?size=10000&lookups=100000"
 
 # Stop server when done
 docker-compose --profile server down benchmark_server
@@ -91,7 +91,7 @@ docker-compose --profile debug-server up -d benchmark_server_debug
 # Run benchmarks via API (note: port 8081)
 curl "http://localhost:8081/benchmark/task1?iterations=1000"
 curl "http://localhost:8081/benchmark/task2?size=10000&iterations=100"
-curl "http://localhost:8081/benchmark/task3?elements=10000&lookups=100000"
+curl "http://localhost:8081/benchmark/task3?size=10000&lookups=100000"
 
 # Stop server when done
 docker-compose --profile debug-server down benchmark_server_debug
@@ -104,8 +104,8 @@ docker-compose --profile debug-server down benchmark_server_debug
 docker-compose --profile server --profile debug-server up -d
 
 # Run same benchmark on both builds
-curl "http://localhost:8080/benchmark/task3?elements=10000&lookups=100000"
-curl "http://localhost:8081/benchmark/task3?elements=10000&lookups=100000"
+curl "http://localhost:8080/benchmark/task3?size=10000&lookups=100000"
+curl "http://localhost:8081/benchmark/task3?size=10000&lookups=100000"
 
 # Stop both servers
 docker-compose --profile server --profile debug-server down

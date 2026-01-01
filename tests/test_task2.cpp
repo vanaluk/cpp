@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE Task2Tests
 #include <boost/test/unit_test.hpp>
 #include <vector>
-#include "task2_vector_erase/vector_erase.hpp"
+#include "examples/vector_erase/vector_erase.hpp"
 
 BOOST_AUTO_TEST_SUITE(NaiveMethod)
 

@@ -1,14 +1,14 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/functional.h>
-#include "../task1_weak_ptr/custom_weak_ptr.hpp"
-#include "../task2_vector_erase/vector_erase.hpp"
-#include "../task3_mapping/container_benchmark.hpp"
+#include "../examples/weak_ptr/custom_weak_ptr.hpp"
+#include "../examples/vector_erase/vector_erase.hpp"
+#include "../examples/container_lookup/container_benchmark.hpp"
 
 namespace py= pybind11;
 
-PYBIND11_MODULE(cpp_interview_bindings, m) {
-	m.doc()= "C++ Interview Demo Project - Python bindings";
+PYBIND11_MODULE(benchmark_kit_bindings, m) {
+	m.doc()= "C++ Benchmark Kit - Python bindings for benchmarking C++ code";
 
 	// Task 1: weak_ptr::lock()
 	m.def("demonstrate_weak_ptr_lock", &demonstrate_weak_ptr_lock,

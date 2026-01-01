@@ -49,7 +49,7 @@ USER appuser
 
 # Healthcheck to verify the container is working
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python3 -c "import sys; sys.path.insert(0, 'build'); import cpp_interview_bindings; print('OK')" || exit 1
+    CMD python3 -c "import sys; sys.path.insert(0, 'build'); import benchmark_kit_bindings; print('OK')" || exit 1
 
 # Run Python script by default
 CMD ["python3", "python/run.py"]

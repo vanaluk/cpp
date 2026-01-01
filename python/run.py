@@ -68,13 +68,17 @@ try:
     if build_dir not in sys.path:
         sys.path.insert(0, build_dir)
 
-    import cpp_interview_bindings as cpp  # type: ignore[import-not-found]
+    # Try new module name first, fall back to legacy name
+    try:
+        import benchmark_kit_bindings as cpp  # type: ignore[import-not-found]
+    except ImportError:
+        import cpp_interview_bindings as cpp  # type: ignore[import-not-found]
 
     CPP_MODULE_AVAILABLE = True
 except ImportError as e:
     # Graceful degradation: continue in stub mode
     print("\n" + "=" * 70)
-    print("WARNING: C++ module 'cpp_interview_bindings' not found")
+    print("WARNING: C++ module 'benchmark_kit_bindings' not found")
     print("=" * 70)
     print("The application will continue in stub mode.")
     print("\nTo build the C++ module, run:")
@@ -109,14 +113,14 @@ class InterviewDemoConsole:
     def print_menu(self):
         """Print main menu"""
         print("\n" + "=" * 50)
-        print("C++ Interview Demo Project - Main Menu")
+        print("C++ Benchmark Kit - Main Menu")
         print("=" * 50)
-        print("[1] Task 1: weak_ptr::lock() implementation")
-        print("[2] Task 2: Remove every second element from vector")
-        print("[3] Task 3: Mapping integer to string")
-        print("[4] Run all tasks")
+        print("[1] Example 1: weak_ptr::lock() implementation")
+        print("[2] Example 2: Remove every second element from vector")
+        print("[3] Example 3: Mapping integer to string")
+        print("[4] Run all benchmarks")
         print("[5] View results from DB")
-        print("[6] Start Boost.Asio server")
+        print("[6] Start REST API server")
         print("[0] Exit")
         print("=" * 50)
 
@@ -171,7 +175,7 @@ class InterviewDemoConsole:
 
     def show_task1_code(self):
         """Show task 1 code"""
-        code_path = "src/task1_weak_ptr/custom_weak_ptr.hpp"
+        code_path = "src/examples/weak_ptr/custom_weak_ptr.hpp"
         if os.path.exists(code_path):
             print(f"\n=== Source code: {code_path} ===\n")
             with open(code_path, 'r', encoding='utf-8') as f:
@@ -809,7 +813,7 @@ class InterviewDemoConsole:
 def main():
     import argparse
     
-    parser = argparse.ArgumentParser(description='C++ Interview Demo - Interactive console')
+    parser = argparse.ArgumentParser(description='C++ Benchmark Kit - Interactive console')
     parser.add_argument('--autorun', action='store_true',
                         help='Automatically run all benchmarks and exit')
     parser.add_argument('--task', '-t', type=int, choices=[1, 2, 3],
@@ -829,7 +833,7 @@ def main():
         if args.autorun or args.task:
             # Automatic mode
             print("=" * 50)
-            print("C++ Interview Demo - Automatic mode")
+            print("C++ Benchmark Kit - Automatic mode")
             print("=" * 50)
             
             if args.task == 1 or args.autorun:

@@ -2,23 +2,23 @@ services:
   # PostgreSQL for storing results
   postgres:
     image: postgres:14
-    container_name: cpp_interview_postgres
+    container_name: benchmark_kit_postgres
     environment:
-      POSTGRES_USER: cpp_interview
-      POSTGRES_PASSWORD: cpp_interview_pass
-      POSTGRES_DB: cpp_interview_db
+      POSTGRES_USER: benchmark_kit
+      POSTGRES_PASSWORD: benchmark_kit_pass
+      POSTGRES_DB: benchmark_kit_db
     ports:
       - "5433:5432"  # External 5433 to avoid conflict with local PostgreSQL
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cpp_interview -d cpp_interview_db"]
+      test: ["CMD-SHELL", "pg_isready -U benchmark_kit -d benchmark_kit_db"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - cpp_interview_network
+      - benchmark_kit_network
 
   # Main application (interactive console) - Release build with ULL optimizations
   app:
@@ -27,16 +27,16 @@ services:
       dockerfile: Dockerfile
       args:
         BUILD_TYPE: Release
-    container_name: cpp_interview_app
+    container_name: benchmark_kit_app
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: cpp_interview_db
-      DB_USER: cpp_interview
-      DB_PASSWORD: cpp_interview_pass
+      DB_NAME: benchmark_kit_db
+      DB_USER: benchmark_kit
+      DB_PASSWORD: benchmark_kit_pass
       BUILD_TYPE: Release
     ports:
       - "8080:8080"  # For menu option [6] Start Boost.Asio server
@@ -46,7 +46,7 @@ services:
     stdin_open: true
     tty: true
     networks:
-      - cpp_interview_network
+      - benchmark_kit_network
     # Graceful shutdown settings
     stop_signal: SIGTERM
     stop_grace_period: 5s
@@ -62,16 +62,16 @@ services:
       dockerfile: Dockerfile
       args:
         BUILD_TYPE: Debug
-    container_name: cpp_interview_app_debug
+    container_name: benchmark_kit_app_debug
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: cpp_interview_db
-      DB_USER: cpp_interview
-      DB_PASSWORD: cpp_interview_pass
+      DB_NAME: benchmark_kit_db
+      DB_USER: benchmark_kit
+      DB_PASSWORD: benchmark_kit_pass
       BUILD_TYPE: Debug
     ports:
       - "8081:8080"  # For menu option [6] Start Boost.Asio server (Debug)
@@ -81,7 +81,7 @@ services:
     stdin_open: true
     tty: true
     networks:
-      - cpp_interview_network
+      - benchmark_kit_network
     stop_signal: SIGTERM
     stop_grace_period: 5s
     command: python3 python/run.py
@@ -95,24 +95,24 @@ services:
       dockerfile: Dockerfile
       args:
         BUILD_TYPE: Release
-    container_name: cpp_interview_benchmark_server
+    container_name: benchmark_kit_server
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: cpp_interview_db
-      DB_USER: cpp_interview
-      DB_PASSWORD: cpp_interview_pass
+      DB_NAME: benchmark_kit_db
+      DB_USER: benchmark_kit
+      DB_PASSWORD: benchmark_kit_pass
       BUILD_TYPE: Release
     ports:
       - "8080:8080"
     volumes:
       - build_cache_release:/app/build
     networks:
-      - cpp_interview_network
-    command: /app/build/asio_server 8080
+      - benchmark_kit_network
+    command: /app/build/benchmark_server 8080
     profiles:
       - server
 
@@ -123,24 +123,24 @@ services:
       dockerfile: Dockerfile
       args:
         BUILD_TYPE: Debug
-    container_name: cpp_interview_benchmark_server_debug
+    container_name: benchmark_kit_server_debug
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: cpp_interview_db
-      DB_USER: cpp_interview
-      DB_PASSWORD: cpp_interview_pass
+      DB_NAME: benchmark_kit_db
+      DB_USER: benchmark_kit
+      DB_PASSWORD: benchmark_kit_pass
       BUILD_TYPE: Debug
     ports:
       - "8081:8080"
     volumes:
       - build_cache_debug:/app/build
     networks:
-      - cpp_interview_network
-    command: /app/build/asio_server 8080
+      - benchmark_kit_network
+    command: /app/build/benchmark_server 8080
     profiles:
       - debug-server
 
@@ -149,18 +149,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: cpp_interview_results
+    container_name: benchmark_kit_results
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: cpp_interview_db
-      DB_USER: cpp_interview
-      DB_PASSWORD: cpp_interview_pass
+      DB_NAME: benchmark_kit_db
+      DB_USER: benchmark_kit
+      DB_PASSWORD: benchmark_kit_pass
     networks:
-      - cpp_interview_network
+      - benchmark_kit_network
     command: python3 python/view_results.py
     profiles:
       - viewer
@@ -171,5 +171,5 @@ volumes:
   build_cache_debug:
 
 networks:
-  cpp_interview_network:
+  benchmark_kit_network:
     driver: bridge

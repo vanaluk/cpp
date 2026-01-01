@@ -1,550 +1,226 @@
-# Quick Start Guide
+# C++ Benchmark Kit - Quick Start Guide
 
-## 1. Via Docker (recommended)
+## Adding Your Own Benchmark
 
-### 1.1 Build
+### Method 1: Simple One-Liner
 
-```bash
-cd cpp
+```cpp
+#include "core/benchmark_kit.hpp"
 
-# Build Release (default, Ultra Low Latency optimizations)
-docker-compose --profile release build app
-# Or via install script (builds Release by default)
-./install.sh
-
-# Build Debug (for development and debugging)
-docker-compose --profile debug build app-debug
-# Or via install script
-./install.sh --local
-
+int main() {
+    auto result = benchmark_kit::BenchmarkRunner::run("my_function", []() {
+        // Your code to benchmark
+        my_function();
+    });
+    
+    result.print();  // Prints detailed statistics
+    return 0;
+}
 ```
 
-> **Note:** Docker supports both **Release** (ULL optimizations) and **Debug** modes via separate services.
+### Method 2: Custom Configuration
 
-### 1.2 Start Interactive Console
+```cpp
+#include "core/benchmark_kit.hpp"
+
+using namespace benchmark_kit;
+
+int main() {
+    BenchmarkConfig config;
+    config.iterations = 10000;        // How many times to run
+    config.warmup_iterations = 1000;  // Warmup runs (not measured)
+    config.threads = 4;               // Run in parallel
+    config.verbose = true;            // Show progress
+
+    auto result = BenchmarkRunner::run("parallel_work", config, []() {
+        do_work();
+    });
+
+    // Access individual stats
+    std::cout << "Mean: " << result.stats.mean_ns << " ns\n";
+    std::cout << "P99:  " << result.stats.p99_ns << " ns\n";
+    std::cout << "Ops/sec: " << result.operations_per_second << "\n";
+    
+    return 0;
+}
+```
+
+### Method 3: Compare Multiple Implementations
+
+```cpp
+#include "core/benchmark_kit.hpp"
+
+using namespace benchmark_kit;
+
+int main() {
+    std::vector<int> data(100000);
+    std::iota(data.begin(), data.end(), 0);
+
+    std::vector<std::pair<std::string, std::function<void()>>> benchmarks = {
+        {"std::sort", [&]() {
+            auto copy = data;
+            std::sort(copy.begin(), copy.end());
+        }},
+        {"std::stable_sort", [&]() {
+            auto copy = data;
+            std::stable_sort(copy.begin(), copy.end());
+        }},
+        {"std::partial_sort", [&]() {
+            auto copy = data;
+            std::partial_sort(copy.begin(), copy.begin() + 100, copy.end());
+        }},
+    };
+
+    BenchmarkConfig config;
+    config.iterations = 100;
+
+    auto results = BenchmarkRunner::compare(benchmarks, config);
+    BenchmarkRunner::print_comparison(results);  // Formatted table
+    
+    return 0;
+}
+```
+
+### Method 4: Benchmark with Setup (Exclude Setup Time)
+
+When you need to prepare data before each iteration but don't want setup time included:
+
+```cpp
+#include "core/benchmark_kit.hpp"
+
+using namespace benchmark_kit;
+
+int main() {
+    BenchmarkConfig config;
+    config.iterations = 1000;
+
+    auto result = BenchmarkRunner::run_with_setup(
+        "sort_random_data",
+        config,
+        // Setup: called before each iteration (NOT timed)
+        []() {
+            std::vector<int> data(10000);
+            std::iota(data.begin(), data.end(), 0);
+            std::random_shuffle(data.begin(), data.end());
+            return data;
+        },
+        // Benchmark: receives setup result (IS timed)
+        [](std::vector<int>& data) {
+            std::sort(data.begin(), data.end());
+        }
+    );
+
+    result.print();
+    return 0;
+}
+```
+
+## Build Commands
 
 ```bash
-# Release mode (default, ULL optimizations)
+# Release build (recommended for accurate benchmarks)
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
+
+# Debug build (for development)
+cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build build-debug -j$(nproc)
+
+# Run
+./build/CppBenchmarkKit
+
+# Run Python console (use the Python version matching build)
+# Check which version: ls build/*.so (e.g., cpython-312 means python3.12)
+python3.12 python/run.py
+```
+
+> **Note:** Python bindings are built for the Python version found by CMake.
+> If you see "ModuleNotFoundError", check the `.so` filename and use the matching Python version.
+
+## Docker
+
+```bash
+# Build and run interactive console
 docker-compose --profile release run --rm --service-ports app
 
-# Debug mode (with debug symbols, no optimizations)
-docker-compose --profile debug run --rm --service-ports app-debug
-
-# Alternative: Start in background, then connect
-docker-compose up -d
-docker-compose exec app python3 python/run.py
-```
-
-> **Note:** Use `--service-ports` flag to enable port mapping for menu option `[6] Start Boost.Asio server`.
-
-### 1.3 Run Specific Commands
-
-```bash
 # Run all benchmarks automatically
 docker-compose --profile release run --rm app python3 python/run.py --autorun
 
-# View results
-docker-compose --profile release run --rm app python3 python/view_results.py
-
-# View statistics
-docker-compose --profile release run --rm app python3 python/view_results.py --stats
-
-# Export results
-docker-compose --profile release run --rm app python3 python/view_results.py --export csv
-
-# Run C++ binary directly
-docker-compose --profile release run --rm app ./build/CppInterviewDemo
-```
-
-### 1.4 Run Unit Tests
-
-```bash
-# Run all unit tests inside Docker
-docker-compose --profile release run --rm app bash -c "cd build && ctest --output-on-failure"
-
-# Run specific test suite
-docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task1 --verbose"
-docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task2 --verbose"
-docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task3 --verbose"
-
-# Run tests with detailed output
-docker-compose --profile release run --rm app bash -c "cd build && ctest -V"
-```
-
-### 1.5 Stop
-
-```bash
-# Stop all containers
-docker-compose down
-
-# Stop and delete DB data
-docker-compose down -v
-```
-
----
-
-## 2. Without Docker (local build)
-
-### 2.1 Install Dependencies
-
-```bash
-# Ubuntu/Debian
-sudo apt-get update
-sudo apt-get install -y \
-    build-essential cmake g++ \
-    python3 python3-pip python3-dev \
-    libboost-all-dev libpq-dev \
-    postgresql postgresql-client
-```
-
-### 2.2 Build Project
-
-```bash
-cd cpp
-
-# Option 1: Via script (force local build, no Docker)
-./install.sh --local
-
-# Option 2: Manually - Release build (Ultra Low Latency optimizations)
-mkdir -p build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-cmake --build . -j$(nproc)
-cd ..
-
-# Option 3: Debug build (for development and debugging)
-mkdir -p build-debug && cd build-debug
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-cmake --build . -j$(nproc)
-cd ..
-
-# Create symlink for IDE support (clangd)
-ln -sf build/compile_commands.json compile_commands.json
-```
-
-> **Note:** Use `--local` flag to guarantee local build even if Docker is installed.
-> Use `./install.sh --help` to see all available options.
-> The `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON` flag generates `compile_commands.json` for IDE support.
-
-#### Build Modes Comparison
-
-| Mode | Command | Use Case |
-|------|---------|----------|
-| **Release** | `cmake .. -DCMAKE_BUILD_TYPE=Release` | Production, benchmarks, ULL optimizations |
-| **Debug** | `cmake .. -DCMAKE_BUILD_TYPE=Debug` | Development, debugging with symbols |
-
-**Release mode** enables Ultra Low Latency optimizations:
-- `-O3 -march=native -mtune=native` — CPU-specific optimizations
-- `-flto` — Link-Time Optimization
-- `-fno-exceptions -fno-rtti` — Disable C++ overhead
-- `-ffast-math -funroll-loops` — Aggressive optimizations
-- See `CMakeLists.txt` for full list
-
-### 2.3 Configure PostgreSQL
-
-**Option A: Quick setup (use your system user, no password needed)**
-
-```bash
-# Create PostgreSQL user matching your system username (one-time setup)
-sudo -u postgres createuser -s $USER
-createdb cpp_interview_db
-psql -d cpp_interview_db -f sql/init.sql
-
-export DB_HOST=
-export DB_PORT=5432
-export DB_NAME=cpp_interview_db
-export DB_USER=$USER
-export DB_PASSWORD=
-```
-
-> **Note:** `DB_HOST=` (empty) uses Unix socket with peer authentication.
-> If you set `DB_HOST=localhost`, PostgreSQL requires password authentication.
-
-**Option B: Dedicated user with password**
-
-```bash
-# Create DB and user
-sudo -u postgres createdb cpp_interview_db
-sudo -u postgres psql -c "CREATE USER cpp_interview WITH PASSWORD 'cpp_interview_pass';"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE cpp_interview_db TO cpp_interview;"
-
-# Initialize schema
-psql -h localhost -U cpp_interview -d cpp_interview_db -f sql/init.sql
-
-# Set environment variables
-export DB_HOST=localhost
-export DB_PORT=5432
-export DB_NAME=cpp_interview_db
-export DB_USER=cpp_interview
-export DB_PASSWORD=cpp_interview_pass
-```
-
-### 2.4 Run Tasks
-
-```bash
-# Interactive console
-python3 python/run.py
-
-# In console select:
-# [1] - Task 1 (weak_ptr::lock)
-# [2] - Task 2 (vector erase)
-# [3] - Task 3 (mapping int→string)
-# [4] - Run all
-# [5] - View results
-# [6] - Start HTTP server
-```
-
-### 2.5 Run Unit Tests
-
-```bash
-cd build
-
-# Run all tests
-ctest --output-on-failure
-
-# Run specific test suite
-ctest -R Task1 --verbose    # Task 1: CustomSharedPtr, CustomWeakPtr
-ctest -R Task2 --verbose    # Task 2: Vector erase methods
-ctest -R Task3 --verbose    # Task 3: Container benchmarks
-
-# Run all tests with detailed output
-ctest -V
-
-# Run tests and show test names
-ctest -N    # List all tests without running
-```
-
-**Test coverage:**
-- **Task 1:** 8 tests (CustomSharedPtr, CustomWeakPtr, lock(), multi-threading)
-- **Task 2:** 25 tests (5 erase methods × 5 scenarios each)
-- **Task 3:** 8 tests (BenchmarkResult validation, positive values, scaling)
-
-### 2.6 View Results
-
-```bash
-# All results
-python3 python/view_results.py
-
-# Task 1 only
-python3 python/view_results.py --task 1
-
-# Filter by build type
-python3 python/view_results.py --build Release
-python3 python/view_results.py --build Debug
-
-# Statistics by methods
-python3 python/view_results.py --stats
-
-# Statistics for Release builds only
-python3 python/view_results.py --stats --build Release
-
-# Compare Release vs Debug performance (shows speedup)
-python3 python/view_results.py --compare
-python3 python/view_results.py --compare --task 2
-
-# Export to CSV
-python3 python/view_results.py --export csv
-
-# Export to JSON
-python3 python/view_results.py --export json --output results.json
-
-# Monitoring mode (update every 5 sec)
-python3 python/view_results.py --watch
-
-# Limit number of records
-python3 python/view_results.py --limit 10
-```
-
----
-
-## 3. Via HTTP Server (REST API)
-
-### 3.1 Start Server
-
-```bash
-# Via Docker - Release server (port 8080)
+# Start REST API server
 docker-compose --profile server up
-
-# Via Docker - Debug server (port 8081)
-docker-compose --profile debug-server up
-
-# Or locally (Release build)
-./build/asio_server 8080
-
-# Or locally (Debug build)
-./build-debug/asio_server 8081
 ```
 
-**Server URLs by build type:**
+## REST API
 
-| Build | URL | Port |
-|-------|-----|------|
-| **Release** | `http://localhost:8080` | 8080 |
-| **Debug** | `http://localhost:8081` | 8081 |
-
-### 3.2 Available Endpoints
-
-| Method | URL | Description |
-|--------|-----|-------------|
-| GET | `/benchmark/task1` | Task 1 benchmark (weak_ptr::lock) |
-| GET | `/benchmark/task2` | Task 2 benchmark (vector erase) |
-| GET | `/benchmark/task3` | Task 3 benchmark (mapping) |
-| GET | `/results` | Get all results from DB |
-| GET | `/health` | Server health check |
-
-### 3.3 Request Examples
-
+Start the server:
 ```bash
-# Task 1 benchmark (Release server)
-curl http://localhost:8080/benchmark/task1
+./build/benchmark_server 8080
+```
 
-# Task 1 benchmark (Debug server)
-curl http://localhost:8081/benchmark/task1
+Make requests:
+```bash
+# Health check
+curl http://localhost:8080/health
 
-# Task 2 benchmark with parameters
-curl "http://localhost:8080/benchmark/task2?size=100000&iterations=100"
-
-# Task 3 benchmark with parameters
+# Run benchmark
+curl "http://localhost:8080/benchmark/task1?iterations=1000000"
+curl "http://localhost:8080/benchmark/task2?size=100000"
 curl "http://localhost:8080/benchmark/task3?size=50000"
 
 # Get results
 curl http://localhost:8080/results
-
-# Server health check
-curl http://localhost:8080/health
-
-# Pretty JSON output (via jq)
-curl -s http://localhost:8080/results | jq
-
-# Save results to file
-curl -s http://localhost:8080/results > results.json
 ```
 
-### 3.4 Response Examples
+## Project Structure
 
-**Task 1 Benchmark:**
-```json
-{
-  "task": 1,
-  "task_name": "weak_ptr::lock()",
-  "method": "CustomWeakPtr::lock()",
-  "execution_time_ns": 1234567,
-  "operations_per_second": 810045.2,
-  "status": "success"
-}
+```
+cpp-benchmark-kit/
+├── src/
+│   ├── core/                   # Framework core (include these)
+│   │   ├── benchmark_kit.hpp   # Main header (includes all)
+│   │   ├── benchmark_runner.hpp # BenchmarkRunner class
+│   │   ├── timer.hpp           # Timer utilities
+│   │   └── statistics.hpp      # Statistical analysis
+│   ├── examples/               # Example benchmarks
+│   │   ├── weak_ptr/           # Reference counting
+│   │   ├── vector_erase/       # Vector algorithms
+│   │   └── container_lookup/   # Container comparison
+│   ├── server/                 # REST API server
+│   └── main.cpp                # Demo application
+├── python/
+│   ├── run.py                  # Interactive console
+│   └── view_results.py         # Results viewer
+└── tests/                      # Unit tests
 ```
 
-**Task 2 Benchmark:**
-```json
-{
-  "task": 2,
-  "task_name": "Vector erase",
-  "methods": [
-    {"name": "naive_erase", "time_ns": 45670000},
-    {"name": "remove_if_erase", "time_ns": 1230000},
-    {"name": "iterators", "time_ns": 43210000},
-    {"name": "copy_to_new", "time_ns": 980000},
-    {"name": "partition", "time_ns": 890000}
-  ],
-  "vector_size": 100000,
-  "iterations": 100,
-  "status": "success"
-}
-```
+## API Reference
 
-**Results from DB:**
-```json
-{
-  "results": [
-    {
-      "id": 1,
-      "timestamp": "2024-12-23T14:30:15",
-      "task_number": 2,
-      "task_name": "Vector erase",
-      "method_name": "remove_if_erase",
-      "execution_time_ns": 1230000,
-      "operations_per_second": 813008.1,
-      "thread_count": 1
-    }
-  ],
-  "total": 1
-}
-```
+### BenchmarkConfig
 
-### 3.5 Automation via Scripts
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `iterations` | int | 1000 | Number of timed runs |
+| `warmup_iterations` | int | 100 | Warmup runs (not timed) |
+| `threads` | int | 1 | Number of parallel threads |
+| `collect_samples` | bool | true | Collect individual samples |
+| `verbose` | bool | false | Print progress |
 
-```bash
-#!/bin/bash
-# run_all_benchmarks.sh
+### BenchmarkStats
 
-SERVER="http://localhost:8080"
+| Field | Type | Description |
+|-------|------|-------------|
+| `mean_ns` | double | Mean time per iteration (nanoseconds) |
+| `stddev_ns` | double | Standard deviation |
+| `min_ns` | double | Minimum time |
+| `max_ns` | double | Maximum time |
+| `p50_ns` | double | Median (50th percentile) |
+| `p95_ns` | double | 95th percentile |
+| `p99_ns` | double | 99th percentile |
 
-echo "Running all benchmarks..."
+### BenchmarkResult
 
-# Task 1
-echo "Task 1: weak_ptr::lock()"
-curl -s "$SERVER/benchmark/task1" | jq
-
-# Task 2 with different sizes
-for size in 10000 50000 100000; do
-    echo "Task 2: vector size=$size"
-    curl -s "$SERVER/benchmark/task2?size=$size" | jq
-done
-
-# Task 3
-echo "Task 3: mapping benchmark"
-curl -s "$SERVER/benchmark/task3?size=100000" | jq
-
-# Get all results
-echo "All results:"
-curl -s "$SERVER/results" | jq
-```
-
----
-
-## 4. Run Unit Tests
-
-Unit tests are built with **Boost.Test** framework and integrated with **CTest**.
-
-### 4.1 Via Docker
-
-```bash
-# Run all tests
-docker-compose --profile release run --rm app bash -c "cd build && ctest --output-on-failure"
-
-# Run specific test
-docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task1 --verbose"
-```
-
-### 4.2 Local
-
-```bash
-cd build
-
-# Run all tests
-ctest --output-on-failure
-
-# Run with verbose output
-ctest -V
-
-# Run specific test suite
-ctest -R Task2 --verbose
-```
-
-### 4.3 Test Summary
-
-| Test Suite | Tests | Description |
-|------------|-------|-------------|
-| Task1Tests | 8 | CustomSharedPtr, CustomWeakPtr, lock(), threading |
-| Task2Tests | 25 | 5 erase methods × 5 scenarios |
-| Task3Tests | 8 | BenchmarkResult validation, container benchmarks |
-| **Total** | **41** | |
-
----
-
-## 5. IDE Setup (clangd / VS Code)
-
-For IDE features like code completion, go-to-definition, and linting, you need `compile_commands.json`:
-
-### After Local Build
-
-```bash
-# compile_commands.json is automatically generated in build/
-# Create symlink in project root for easier IDE access
-ln -sf build/compile_commands.json compile_commands.json
-
-# Or for debug build
-ln -sf build-debug/compile_commands.json compile_commands.json
-```
-
-### After Docker Build
-
-```bash
-# Copy compile_commands.json from Docker container
-docker-compose --profile release run --rm app cat /app/build/compile_commands.json > compile_commands.json
-```
-
-### Restart Language Server
-
-After generating `compile_commands.json`:
-- **VS Code:** `Ctrl+Shift+P` → "clangd: Restart language server"
-- Or close and reopen the IDE
-
-### Troubleshooting
-
-If clangd shows "file not found" errors:
-1. Ensure project is built: `cmake -B build && cmake --build build`
-2. Check `build/compile_commands.json` exists and is not empty
-3. Restart clangd language server
-4. Check `.clangd` file points to correct directory: `CompilationDatabase: build`
-
----
-
-## 6. Command Summary Table
-
-### Run Tasks
-
-| Method | Command |
-|--------|---------|
-| Docker (interactive) | `docker-compose --profile release run --rm --service-ports app` |
-| Docker (auto) | `docker-compose --profile release run --rm app python3 python/run.py --autorun` |
-| Local (console) | `python3 python/run.py` |
-| HTTP API | `curl http://localhost:8080/benchmark/task1` |
-
-### View Results
-
-| Method | Command |
-|--------|---------|
-| Docker | `docker-compose --profile release run --rm app python3 python/view_results.py` |
-| Local | `python3 python/view_results.py` |
-| HTTP API | `curl http://localhost:8080/results` |
-| Statistics | `python3 python/view_results.py --stats` |
-| Compare Release/Debug | `python3 python/view_results.py --compare` |
-| Filter by build | `python3 python/view_results.py --build Release` |
-| Export CSV | `python3 python/view_results.py --export csv` |
-| Monitoring | `python3 python/view_results.py --watch` |
-
-### Run Unit Tests
-
-| Method | Command |
-|--------|---------|
-| Docker (all) | `docker-compose --profile release run --rm app bash -c "cd build && ctest --output-on-failure"` |
-| Docker (Task1) | `docker-compose --profile release run --rm app bash -c "cd build && ctest -R Task1 --verbose"` |
-| Local (all) | `cd build && ctest --output-on-failure` |
-| Local (verbose) | `cd build && ctest -V` |
-| List tests | `cd build && ctest -N` |
-
-### Build Modes
-
-| Mode | Docker | Local | Use Case |
-|------|--------|-------|----------|
-| **Release (ULL)** | `docker-compose build app` | `cmake -B build -DCMAKE_BUILD_TYPE=Release` | Production, benchmarks |
-| **Debug** | `docker-compose --profile debug build app-debug` | `cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug` | Development, debugging |
-
-**Docker Run Commands:**
-| Mode | Command |
-|------|---------|
-| Release | `docker-compose --profile release run --rm --service-ports app` |
-| Debug | `docker-compose --profile debug run --rm --service-ports app-debug` |
-| Release Server | `docker-compose --profile server up` |
-| Debug Server | `docker-compose --profile debug-server up` (port 8081) |
-
-**Release mode optimizations:**
-- `-O3 -march=native -mtune=native` — CPU-specific
-- `-flto` — Link-Time Optimization
-- `-fno-exceptions -fno-rtti` — Disable C++ overhead
-- `-ffast-math -funroll-loops` — Aggressive optimizations
-
-### Docker Management
-
-| Action | Command |
-|--------|---------|
-| Build | `docker-compose build` |
-| Rebuild (no cache) | `docker-compose build --no-cache` |
-| Start interactive console | `docker-compose --profile release run --rm app` |
-| Start server | `docker-compose --profile server up` |
-| Stop | `docker-compose down` |
-| Clear data | `docker-compose down -v` |
-| Logs | `docker-compose logs -f` |
-| List project images | `docker images \| grep cpp` |
-| Remove project images | `docker-compose down --rmi all` |
-| Full cleanup (images + data) | `docker-compose down -v --rmi all` |
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `print()` | void | Print formatted results |
+| `total_time_ms()` | double | Total time in milliseconds |
+| `total_time_s()` | double | Total time in seconds |

@@ -2,7 +2,7 @@
 #include <boost/test/unit_test.hpp>
 #include <thread>
 #include <vector>
-#include "task1_weak_ptr/custom_weak_ptr.hpp"
+#include "examples/weak_ptr/custom_weak_ptr.hpp"
 
 BOOST_AUTO_TEST_SUITE(Task1TestSuite)
 
