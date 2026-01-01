@@ -118,7 +118,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Threads::Threads
 )
 
-# Legacy executable name (for backward compatibility)
+# Legacy executable name (backward compatibility symlink - can be removed in future)
 add_custom_target(CppInterviewDemo ALL
     COMMAND ${CMAKE_COMMAND} -E create_symlink
         $<TARGET_FILE:${PROJECT_NAME}>
@@ -149,7 +149,7 @@ if(BUILD_PYBIND11)
         VISIBILITY_INLINES_HIDDEN 1
     )
 
-    # Legacy binding name (for backward compatibility with Python scripts)
+    # Legacy binding name (backward compatibility symlink - can be removed in future)
     add_custom_target(cpp_interview_bindings ALL
         COMMAND ${CMAKE_COMMAND} -E create_symlink
             $<TARGET_FILE:benchmark_kit_bindings>

@@ -184,7 +184,8 @@ cpp-benchmark-kit/
 │   ├── examples/               # Example benchmarks
 │   │   ├── weak_ptr/           # Reference counting
 │   │   ├── vector_erase/       # Vector algorithms
-│   │   └── container_lookup/   # Container comparison
+│   │   ├── container_lookup/   # Container comparison
+│   │   └── sorting/            # Sorting algorithms
 │   ├── server/                 # REST API server
 │   └── main.cpp                # Demo application
 ├── python/

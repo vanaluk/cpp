@@ -38,9 +38,9 @@ public:
 
 		std::string host= get_env("DB_HOST", "postgres");
 		std::string port= get_env("DB_PORT", "5432");
-		std::string dbname= get_env("DB_NAME", "cpp_interview_db");
-		std::string user= get_env("DB_USER", "cpp_interview");
-		std::string password= get_env("DB_PASSWORD", "cpp_interview_pass");
+		std::string dbname= get_env("DB_NAME", "benchmark_kit_db");
+		std::string user= get_env("DB_USER", "benchmark_kit");
+		std::string password= get_env("DB_PASSWORD", "benchmark_kit_pass");
 
 		std::string conninfo= "host=" + host +
 			" port=" + port +

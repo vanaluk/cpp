@@ -53,7 +53,7 @@ docker-compose --profile release run --rm --service-ports app
 docker-compose --profile debug run --rm --service-ports app-debug
 ```
 
-> **Note:** Menu option `[6] Start Boost.Asio server` works from interactive console.
+> **Note:** Menu option `[6] Start REST API server` works from interactive console.
 > Use `--service-ports` flag to enable port mapping:
 > - Release (`app`) → server on port 8080
 > - Debug (`app-debug`) → server on port 8081

@@ -176,7 +176,8 @@ cpp-benchmark-kit/
 │   │   └── statistics.hpp      # Statistical analysis utilities
 │   ├── server/                 # REST API server (Boost.Asio)
 │   │   └── server.cpp
-│   ├── storage/                # Database integration
+│   ├── db/                     # Database client (PostgreSQL)
+│   │   └── postgres_client.hpp
 │   ├── bindings/               # Python bindings (pybind11)
 │   ├── examples/               # Example benchmarks
 │   │   ├── weak_ptr/           # Reference counting implementation
@@ -354,9 +355,9 @@ std::stable_sort                    515459.98       1.94e+03          1.29x
 # PostgreSQL connection
 export DB_HOST=localhost
 export DB_PORT=5432
-export DB_NAME=cpp_benchmark_db
-export DB_USER=benchmark
-export DB_PASSWORD=benchmark_pass
+export DB_NAME=benchmark_kit_db
+export DB_USER=benchmark_kit
+export DB_PASSWORD=benchmark_kit_pass
 ```
 
 ## License

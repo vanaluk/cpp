@@ -11,7 +11,7 @@ import json
 # Add path to modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from run import InterviewDemoConsole, CPP_MODULE_AVAILABLE, cpp
+from run import BenchmarkConsole, CPP_MODULE_AVAILABLE, cpp
 
 
 class TestTask1Methods:
@@ -19,7 +19,7 @@ class TestTask1Methods:
     
     def test_run_task1_demo_without_module(self):
         """TC-E2E-03: Error handling when module missing"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         # Mock check_cpp_module to return False
         with patch.object(console, 'check_cpp_module', return_value=False):
@@ -30,7 +30,7 @@ class TestTask1Methods:
     @pytest.mark.skipif(not CPP_MODULE_AVAILABLE, reason="C++ module not available")
     def test_run_task1_demo_with_module(self):
         """TC-E2E-01: Task 1 demonstration runs"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         # Mock demonstrate_weak_ptr_lock to avoid actual output
         if CPP_MODULE_AVAILABLE:
@@ -41,7 +41,7 @@ class TestTask1Methods:
     @pytest.mark.skipif(not CPP_MODULE_AVAILABLE, reason="C++ module not available")
     def test_run_task1_benchmark_with_module(self):
         """TC-E2E-02: Task 1 benchmark returns real time"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         if CPP_MODULE_AVAILABLE:
             # Mock benchmark function to return realistic time
@@ -63,7 +63,7 @@ class TestTask1Methods:
     
     def test_run_task1_benchmark_without_module(self):
         """Test benchmark handling when module missing"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         with patch.object(console, 'check_cpp_module', return_value=False):
             console.run_task1_benchmark()
@@ -76,7 +76,7 @@ class TestTask2Methods:
     @pytest.mark.skipif(not CPP_MODULE_AVAILABLE, reason="C++ module not available")
     def test_task2_menu_demonstration(self):
         """TC-E2E-01: Task 2 demonstration runs"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         if CPP_MODULE_AVAILABLE:
             with patch.object(cpp, 'demonstrate_vector_erase') as mock_demo:
@@ -88,7 +88,7 @@ class TestTask2Methods:
     @pytest.mark.skipif(not CPP_MODULE_AVAILABLE, reason="C++ module not available")
     def test_run_task2_benchmark_calls_all_methods(self):
         """TC-E2E-02: Task 2 comparative benchmark runs"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         if CPP_MODULE_AVAILABLE:
             # Mock all benchmark functions
@@ -119,7 +119,7 @@ class TestTask2Methods:
     
     def test_run_task2_benchmark_without_module(self):
         """TC-E2E-04: Error handling when module missing"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         with patch.object(console, 'check_cpp_module', return_value=False):
             console.run_task2_benchmark()
@@ -128,7 +128,7 @@ class TestTask2Methods:
     @pytest.mark.skipif(not CPP_MODULE_AVAILABLE, reason="C++ module not available")
     def test_run_task2_benchmark_saves_to_db(self):
         """TC-E2E-03: Benchmark results are saved to DB"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         if CPP_MODULE_AVAILABLE and console.db.is_connected():
             mock_times = [100000000, 50000000, 80000000, 30000000, 25000000]
@@ -158,7 +158,7 @@ class TestTask3Methods:
     @pytest.mark.skipif(not CPP_MODULE_AVAILABLE, reason="C++ module not available")
     def test_run_task3_benchmark_displays_all_metrics(self):
         """TC-E2E-01: Task 3 benchmark displays all metrics"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         if CPP_MODULE_AVAILABLE:
             # Create mock BenchmarkResult objects
@@ -209,7 +209,7 @@ class TestTask3Methods:
     @pytest.mark.skipif(not CPP_MODULE_AVAILABLE, reason="C++ module not available")
     def test_run_task3_benchmark_recommendation(self):
         """TC-E2E-02: Recommendation is based on real data"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         if CPP_MODULE_AVAILABLE:
             # Create mock results where unordered_map is fastest
@@ -250,7 +250,7 @@ class TestTask3Methods:
     @pytest.mark.skipif(not CPP_MODULE_AVAILABLE, reason="C++ module not available")
     def test_run_task3_benchmark_saves_to_db(self):
         """TC-E2E-03: Benchmark results are saved to DB with JSON parameters"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         if CPP_MODULE_AVAILABLE and console.db.is_connected():
             mock_map_result = Mock()
@@ -296,7 +296,7 @@ class TestTask3Methods:
     
     def test_run_task3_benchmark_without_module(self):
         """Test benchmark handling when module missing"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         with patch.object(console, 'check_cpp_module', return_value=False):
             console.run_task3_benchmark()
@@ -336,7 +336,7 @@ class TestAutoRunMethods:
     @pytest.mark.skipif(not CPP_MODULE_AVAILABLE, reason="C++ module not available")
     def test_run_task1_benchmark_auto(self):
         """Test auto-run for Task 1"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         if CPP_MODULE_AVAILABLE:
             mock_time_ns = 50000000
@@ -348,7 +348,7 @@ class TestAutoRunMethods:
     @pytest.mark.skipif(not CPP_MODULE_AVAILABLE, reason="C++ module not available")
     def test_run_task2_benchmark_auto(self):
         """Test auto-run for Task 2"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         if CPP_MODULE_AVAILABLE:
             mock_times = [100000000, 50000000, 80000000, 30000000, 25000000]
@@ -365,7 +365,7 @@ class TestAutoRunMethods:
     @pytest.mark.skipif(not CPP_MODULE_AVAILABLE, reason="C++ module not available")
     def test_run_task3_benchmark_auto(self):
         """Test auto-run for Task 3"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         if CPP_MODULE_AVAILABLE:
             mock_map_result = Mock()
@@ -402,7 +402,7 @@ class TestAsioServer:
     
     def test_run_asio_server_missing_executable(self):
         """TC-E2E-03: Error when executable missing"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         # Mock os.path.exists to return False
         with patch('os.path.exists', return_value=False):
@@ -421,7 +421,7 @@ class TestAsioServer:
                         reason="asio_server executable not built")
     def test_run_asio_server_displays_info(self):
         """TC-E2E-01: Server info banner is displayed"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         # Mock subprocess.Popen to avoid actually starting server
         mock_process = Mock()
@@ -451,7 +451,7 @@ class TestAsioServer:
     
     def test_run_asio_server_handles_keyboard_interrupt(self):
         """TC-E2E-02: Server stops on Ctrl+C"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         mock_process = Mock()
         mock_process.stdout = iter(["Server started\n"])
@@ -483,7 +483,7 @@ class TestRunAllTasks:
     
     def test_run_all_tasks_without_module(self):
         """TC-E2E-05: Error handling when module missing"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         with patch.object(console, 'check_cpp_module', return_value=False):
             # Should return early without crashing when module is missing
@@ -493,7 +493,7 @@ class TestRunAllTasks:
     @pytest.mark.skipif(not CPP_MODULE_AVAILABLE, reason="C++ module not available")
     def test_run_all_tasks_calls_all_demos_and_benchmarks(self):
         """TC-E2E-01: Run all tasks completes successfully"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         if CPP_MODULE_AVAILABLE:
             # Mock all C++ functions
@@ -557,7 +557,7 @@ class TestRunAllTasks:
     @pytest.mark.skipif(not CPP_MODULE_AVAILABLE, reason="C++ module not available")
     def test_run_all_tasks_shows_summary(self):
         """TC-E2E-01: Summary of results is displayed"""
-        console = InterviewDemoConsole()
+        console = BenchmarkConsole()
         
         if CPP_MODULE_AVAILABLE:
             with patch.object(cpp, 'demonstrate_weak_ptr_lock'):

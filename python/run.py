@@ -72,7 +72,8 @@ try:
     try:
         import benchmark_kit_bindings as cpp  # type: ignore[import-not-found]
     except ImportError:
-        import cpp_interview_bindings as cpp  # type: ignore[import-not-found]
+        # Legacy module name kept for backward compatibility
+        import cpp_interview_bindings as cpp  # type: ignore[import-not-found]  # noqa: F401
 
     CPP_MODULE_AVAILABLE = True
 except ImportError as e:
@@ -88,7 +89,7 @@ except ImportError as e:
     CPP_MODULE_AVAILABLE = False
 
 
-class InterviewDemoConsole:
+class BenchmarkConsole:
     def __init__(self):
         self.db = DatabaseManager()
         self.running = True
@@ -827,7 +828,7 @@ def main():
     
     args = parser.parse_args()
     
-    console = InterviewDemoConsole()
+    console = BenchmarkConsole()
     
     try:
         if args.autorun or args.task:
