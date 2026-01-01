@@ -1,6 +1,6 @@
 #define BOOST_TEST_MODULE Task3Tests
 #include <boost/test/unit_test.hpp>
-#include "task3_mapping/container_benchmark.hpp"
+#include "examples/container_lookup/container_benchmark.hpp"
 
 BOOST_AUTO_TEST_SUITE(Task3TestSuite)
 

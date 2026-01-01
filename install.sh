@@ -43,7 +43,7 @@ if [ "$SHOW_HELP" = true ]; then
     exit 0
 fi
 
-echo "=== C++ Interview Demo Project - Installation ==="
+echo "=== C++ Benchmark Kit - Installation ==="
 echo ""
 
 # Function to check command

@@ -14,63 +14,63 @@ endif()
 add_compile_definitions(BOOST_TEST_DYN_LINK)
 
 # ============================================================
-# Test for Task 1: CustomSharedPtr, CustomWeakPtr, lock()
+# Test for Example 1: CustomSharedPtr, CustomWeakPtr, lock()
 # ============================================================
-add_executable(test_task1 
+add_executable(test_weak_ptr 
     test_task1.cpp 
-    ${CMAKE_SOURCE_DIR}/src/task1_weak_ptr/custom_weak_ptr.cpp
+    ${CMAKE_SOURCE_DIR}/src/examples/weak_ptr/custom_weak_ptr.cpp
 )
-target_link_libraries(test_task1 PRIVATE 
+target_link_libraries(test_weak_ptr PRIVATE 
     Boost::unit_test_framework 
     Threads::Threads
 )
-target_include_directories(test_task1 PRIVATE 
+target_include_directories(test_weak_ptr PRIVATE 
     ${CMAKE_SOURCE_DIR}/src
 )
 # Boost.Test requires exceptions and RTTI - override ULL flags in Release
-target_compile_options(test_task1 PRIVATE
+target_compile_options(test_weak_ptr PRIVATE
     $<$<CONFIG:Release>:-fexceptions -frtti>
 )
-add_test(NAME Task1Tests COMMAND test_task1 --log_level=test_suite)
+add_test(NAME WeakPtrTests COMMAND test_weak_ptr --log_level=test_suite)
 
 # ============================================================
-# Test for Task 2: Vector erase methods
+# Test for Example 2: Vector erase methods
 # ============================================================
-add_executable(test_task2 
+add_executable(test_vector_erase 
     test_task2.cpp 
-    ${CMAKE_SOURCE_DIR}/src/task2_vector_erase/vector_erase.cpp
+    ${CMAKE_SOURCE_DIR}/src/examples/vector_erase/vector_erase.cpp
     ${CMAKE_SOURCE_DIR}/src/benchmark/benchmark_utils.cpp
 )
-target_link_libraries(test_task2 PRIVATE 
+target_link_libraries(test_vector_erase PRIVATE 
     Boost::unit_test_framework 
     Threads::Threads
 )
-target_include_directories(test_task2 PRIVATE 
+target_include_directories(test_vector_erase PRIVATE 
     ${CMAKE_SOURCE_DIR}/src
 )
 # Boost.Test requires exceptions and RTTI - override ULL flags in Release
-target_compile_options(test_task2 PRIVATE 
+target_compile_options(test_vector_erase PRIVATE 
     $<$<CONFIG:Release>:-fexceptions -frtti>
 )
-add_test(NAME Task2Tests COMMAND test_task2 --log_level=test_suite)
+add_test(NAME VectorEraseTests COMMAND test_vector_erase --log_level=test_suite)
 
 # ============================================================
-# Test for Task 3: Container benchmark functions
+# Test for Example 3: Container benchmark functions
 # ============================================================
-add_executable(test_task3 
+add_executable(test_container_lookup 
     test_task3.cpp 
-    ${CMAKE_SOURCE_DIR}/src/task3_mapping/container_benchmark.cpp
+    ${CMAKE_SOURCE_DIR}/src/examples/container_lookup/container_benchmark.cpp
     ${CMAKE_SOURCE_DIR}/src/benchmark/benchmark_utils.cpp
 )
-target_link_libraries(test_task3 PRIVATE 
+target_link_libraries(test_container_lookup PRIVATE 
     Boost::unit_test_framework 
     Threads::Threads
 )
-target_include_directories(test_task3 PRIVATE 
+target_include_directories(test_container_lookup PRIVATE 
     ${CMAKE_SOURCE_DIR}/src
 )
 # Boost.Test requires exceptions and RTTI - override ULL flags in Release
-target_compile_options(test_task3 PRIVATE 
+target_compile_options(test_container_lookup PRIVATE 
     $<$<CONFIG:Release>:-fexceptions -frtti>
 )
-add_test(NAME Task3Tests COMMAND test_task3 --log_level=test_suite)
+add_test(NAME ContainerLookupTests COMMAND test_container_lookup --log_level=test_suite)

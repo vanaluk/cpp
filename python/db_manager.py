@@ -38,9 +38,9 @@ class DatabaseManager:
             self.conn = psycopg2.connect(
                 host=os.getenv("DB_HOST", "localhost"),
                 port=os.getenv("DB_PORT", "5432"),
-                database=os.getenv("DB_NAME", "cpp_interview_db"),
-                user=os.getenv("DB_USER", "cpp_interview"),
-                password=os.getenv("DB_PASSWORD", "cpp_interview_pass"),
+                database=os.getenv("DB_NAME", "benchmark_kit_db"),
+                user=os.getenv("DB_USER", "benchmark_kit"),
+                password=os.getenv("DB_PASSWORD", "benchmark_kit_pass"),
             )
             self.conn.autocommit = True
         except psycopg2.OperationalError as e:

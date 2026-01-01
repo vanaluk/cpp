@@ -8,7 +8,9 @@ cmake-build-*/
 *.dylib
 
 # Executables
+CppBenchmarkKit
 CppInterviewDemo
+benchmark_kit_bindings*.so
 cpp_interview_bindings*.so
 
 # IDE
